@@ -1,0 +1,71 @@
+
+## FIAP data model in JSON
+
+{ "fiap" : <version>, 
+  "timezone" : <tz string>, 
+  <data request spec> |
+  <data response spec> |
+  <query request spec> |
+  <query response spec> }
+
+<version> := "20140401"
+
+<data request spec> :=
+  "dataRQ" : [ <point spec>, ... ]
+
+<data response spec> :=
+  "dataRS" : {
+    "response" : <response message> }
+
+<query request spec> :=
+  "queryRQ" : <storage query spec> | <stream query spec>
+
+<query response spec> :=
+  "queryRS" : {
+    "response" : <response message>,
+    "point" : [ <point spec>, ... ] }
+
+<point spec> := {
+  "<point id>" : [ <value spec>, ... ] }
+
+<value spec> := {
+  "value" : <value>,
+  "time" : <time spec> }
+
+<storage query spec> := {
+  "uuid" : <uuid>,
+  "type" : "storage",
+  "acceptableSize" : <acceptable size>,
+  "cursor" : <cursor>,
+  "key" : [ <key spec>, ... ] }
+
+<stream query spec> := {
+  "uuid" : <uuid>,
+  "type" : "stream",
+  "acceptableSize" : <acceptable size>,
+  "ttl" : <ttl>,
+  "callbackData" : <callback data point>,
+  "callbackControl" : <callback control point>,
+  "key" : [ <key spec> ... ] }
+
+<key spec> := {
+  "id" : <point id>,
+  "attrName" : <attribute name>,
+  "eq" : <value>,
+  "ne" : <value>,
+  "lt" : <value>,
+  "gt" : <value>,
+  "lteq" : <value>,
+  "gteq" : <value>,
+  "select" : <"minimum" | "maximum">,
+  "trap" : <"changed"> }
+
+<point id> := PointID
+
+<time spec> := ISO8601 date and time string
+
+<value> := value string
+
+## response message
+
+RFC2616 section 10

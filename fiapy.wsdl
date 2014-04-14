@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions targetNamespace="http://soap.fiap.org/"
+  xmlns:s0="http://gutp.jp/fiap/2009/11/"
+  xmlns:s="http://www.w3.org/2001/XMLSchema"
+  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:tns="http://soap.fiap.org/"
+  xmlns:http="http://schemas.xmlsoap.org/wsdl/http/"
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://gutp.jp/fiap/2009/11/">
+
+      <s:simpleType name="uuid">
+        <s:restriction base="s:string">
+          <s:pattern value="[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"/>
+        </s:restriction> 
+      </s:simpleType>
+
+      <s:simpleType name="queryType">
+        <s:restriction base="s:string">
+          <s:enumeration value="storage"/>
+          <s:enumeration value="stream"/>
+        </s:restriction>
+      </s:simpleType>      
+      
+      <s:simpleType name="attrNameType">
+        <s:restriction base="s:string">
+          <s:enumeration value="time"/>
+          <s:enumeration value="value"/>
+        </s:restriction>
+      </s:simpleType>
+
+      <s:simpleType name="selectType">
+        <s:restriction base="s:string">
+          <s:enumeration value="minimum"/>
+          <s:enumeration value="maximum"/>
+        </s:restriction>
+      </s:simpleType>
+
+      <s:simpleType name="trapType">
+        <s:restriction base="s:string">
+          <s:enumeration value="changed"/>
+        </s:restriction>
+      </s:simpleType>
+
+      <s:complexType name="key">
+        <s:sequence>
+          <s:element maxOccurs="unbounded" minOccurs="0" name="key" type="s0:key"/>
+        </s:sequence>
+        <s:attribute name="id" type="s:anyURI" use="required"/>
+        <s:attribute name="attrName" type="s0:attrNameType" use="required"/>
+        <s:attribute name="eq" type="s:string" use="optional"/>
+        <s:attribute name="neq" type="s:string" use="optional"/>
+        <s:attribute name="lt" type="s:string" use="optional"/>
+        <s:attribute name="gt" type="s:string" use="optional"/>
+        <s:attribute name="lteq" type="s:string" use="optional"/>
+        <s:attribute name="gteq" type="s:string" use="optional"/>
+        <s:attribute name="select" type="s0:selectType" use="optional"/>
+        <s:attribute name="trap" type="s0:trapType" use="optional"/>
+      </s:complexType>
+
+      <s:complexType name="query">
+        <s:sequence>
+          <s:element maxOccurs="unbounded" minOccurs="0" name="key" type="s0:key"/>
+        </s:sequence>
+        <s:attribute name="id" type="s0:uuid" use="required"/>
+        <s:attribute name="type" type="s0:queryType" use="required"/>
+        <s:attribute name="cursor" type="s0:uuid" use="optional"/>
+        <s:attribute name="ttl" type="s:nonNegativeInteger" use="optional"/>
+        <s:attribute name="acceptableSize" type="s:positiveInteger" use="optional"/>
+        <s:attribute name="callbackData" type="s:anyURI" use="optional"/>
+        <s:attribute name="callbackControl" type="s:anyURI" use="optional"/>
+      </s:complexType>
+           
+      <s:complexType name="error">
+        <s:simpleContent>
+          <s:extension base="s:string">
+            <s:attribute name="type" type="s:string" use="required"/>
+          </s:extension>
+        </s:simpleContent>
+      </s:complexType>
+
+      <s:complexType name="OK">
+      </s:complexType>
+
+      <s:complexType name="header">
+        <s:sequence>
+          <s:element maxOccurs="1" minOccurs="0" name="OK" type="s0:OK"/>
+          <s:element maxOccurs="1" minOccurs="0" name="error" type="s0:error"/>
+          <s:element maxOccurs="1" minOccurs="0" name="query" type="s0:query"/>
+        </s:sequence>
+      </s:complexType>
+
+      <s:complexType name="value">
+        <s:simpleContent>
+          <s:extension base="s:string">
+            <s:attribute name="time" type="s:dateTime" use="optional"/>
+          </s:extension>
+        </s:simpleContent>
+      </s:complexType>
+
+      <s:complexType name="point">
+        <s:sequence>
+          <s:element maxOccurs="unbounded" minOccurs="0" name="value" type="s0:value"/>
+        </s:sequence>
+        <s:attribute name="id" type="s:anyURI" use="required"/>
+      </s:complexType>
+
+      <s:complexType name="pointSet">
+        <s:sequence>
+          <s:element maxOccurs="unbounded" minOccurs="0" name="pointSet" type="s0:pointSet"/>
+          <s:element maxOccurs="unbounded" minOccurs="0" name="point" type="s0:point"/>
+        </s:sequence>
+        <s:attribute name="id" type="s:anyURI" use="required"/>
+      </s:complexType>
+
+      <s:complexType name="body">
+        <s:sequence>
+          <s:element maxOccurs="unbounded" minOccurs="0" name="pointSet" type="s0:pointSet"/>
+          <s:element maxOccurs="unbounded" minOccurs="0" name="point" type="s0:point"/>
+        </s:sequence>
+      </s:complexType>
+                
+      <s:complexType name="transport">
+        <s:sequence>
+          <s:element maxOccurs="1" minOccurs="0" name="header" type="s0:header"/>
+          <s:element maxOccurs="1" minOccurs="0" name="body" type="s0:body"/>
+        </s:sequence>
+      </s:complexType>
+
+      <s:element name="transport" type="s0:transport"/>
+
+    </s:schema>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://soap.fiap.org/">
+      <s:import namespace="http://gutp.jp/fiap/2009/11/"/>
+
+      <s:element name="queryRQ">
+        <s:complexType>
+          <s:sequence>
+            <s:element maxOccurs="1" minOccurs="1" ref="s0:transport"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      
+      <s:element name="queryRS">
+        <s:complexType>
+          <s:sequence>
+            <s:element maxOccurs="1" minOccurs="1" ref="s0:transport"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      
+      <s:element name="dataRQ">
+        <s:complexType>
+          <s:sequence>
+            <s:element maxOccurs="1" minOccurs="1" ref="s0:transport"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      
+      <s:element name="dataRS">
+        <s:complexType>
+          <s:sequence>
+            <s:element maxOccurs="1" minOccurs="1" ref="s0:transport"/>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="querySoapOut">
+    <wsdl:part name="parameters" element="tns:queryRS">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="dataSoapIn">
+    <wsdl:part name="parameters" element="tns:dataRQ">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="dataSoapOut">
+    <wsdl:part name="parameters" element="tns:dataRS">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:message name="querySoapIn">
+    <wsdl:part name="parameters" element="tns:queryRQ">
+    </wsdl:part>
+  </wsdl:message>
+  <wsdl:portType name="FIAPServiceSoap">
+    <wsdl:operation name="query">
+      <wsdl:input message="tns:querySoapIn">
+    </wsdl:input>
+      <wsdl:output message="tns:querySoapOut">
+    </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="data">
+      <wsdl:input message="tns:dataSoapIn">
+    </wsdl:input>
+      <wsdl:output message="tns:dataSoapOut">
+    </wsdl:output>
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="FIAPServiceSoap" type="tns:FIAPServiceSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http"/>
+    <wsdl:operation name="query">
+      <soap:operation soapAction="http://soap.fiap.org/query" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="data">
+      <soap:operation soapAction="http://soap.fiap.org/data" style="document"/>
+      <wsdl:input>
+        <soap:body use="literal"/>
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal"/>
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="FIAPStorage">
+    <wsdl:port name="FIAPServiceSoap" binding="tns:FIAPServiceSoap">
+      <soap:address location="__FIAP_SERVICE_PORT__"/>
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>
