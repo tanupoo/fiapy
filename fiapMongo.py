@@ -95,32 +95,51 @@ class fiapMongo():
 
   #
   # input: key, limit, skip
-  #   { 'pid': pid, 'an': attrName, 'op': 'max'|'min',
+  #   key = { 'pid': pid, 'an': attrName, 'op': 'max'|'min',
   #     'cond': { '$where' : 'condition' }, 'trap': True }
-  #   k_limit == 0 means no limitation for query result.
+  #   limit is as an acceptableSize.
+  #   limit == 0 means no limitation for query result.
+  #   skip is as the value of a cursor.
   #
   # output: cursor and set below key:value in the key.
-  #   key['count']
-  #   key['rest']
+  #   key['count']: the number of total data without both limit and skip.
+  #   key['next']: the number to be skipped for the next query.
+  #                key['count'] == key['skip'] means that the result
+  #                of the query includes all data.
+  #   key['rest']: the remained data after this query.
   #   key['result'] = 0
   #
   def iterPoint(self, key, k_limit, k_skip):
     pid = key['pid']
     cond = key['cond']
     cursor = self.db[pid].find(cond)
+    key['count'] = 0
+    if key['op'] == 'max':
+      cursor = cursor.sort([(key['an'],pymongo.DESCENDING)]).limit(1)
+      key['count'] = 1
+    elif key['op'] == 'min':
+      cursor = cursor.sort([(key['an'],pymongo.ASCENDING)]).limit(1)
+      key['count'] = 1
+    elif key['op'] != None:
+      raise fiapMongoException('invalid op (%s) is specified' % key['op'])
+    else:
+      # put it here to avoid double counting the result.
+      key['count'] = cursor.count()
+    #
+    # set skip and limit
+    #
     if k_skip != 0:
       cursor = cursor.skip(k_skip)
     if k_limit != 0:
       cursor = cursor.limit(k_limit)
-    if key['op'] == 'max':
-      cursor = cursor.sort([(key['an'],pymongo.DESCENDING)]).limit(1)
-    elif key['op'] == 'min':
-      cursor = cursor.sort([(key['an'],pymongo.ASCENDING)]).limit(1)
-    elif key['op'] != None:
-      raise fiapMongoException('invalid op (%s) is specified' % key['op'])
-    key['count'] = cursor.count()
+    #
+    # set additional information
+    #
     key['rest'] = key['count'] - k_skip - k_limit
-    key['rest'] = 0 if key['rest'] < 0 else key['rest']
+    key['next'] = key['count'] - key['rest']
+    if key['rest'] <= 0:
+      key['rest'] = 0 if key['rest'] < 0 else key['rest']
+      key['next'] = 0
     key['result'] = 0
     return cursor
 
@@ -128,7 +147,7 @@ class fiapMongo():
 # input: a ISO8601 time string.
 # output: a string for javascript time comparison.
 #
-def getKeyCondTime(timestr, op):
+def getKeyCondTime(key, timestr, op):
   fmt_isodate = 'ISODate("%Y-%m-%dT%H:%M:%SZ")'
   if len(timestr) != 0:
     raise fiapMongoException('null time string is specified.')
@@ -142,7 +161,7 @@ def getKeyCondTime(timestr, op):
 # dummy
 #
 def getKeyCondValue(str, op):
-  pass
+  return ' this.value %s %s' % (op, str)
 
 if __name__ == '__main__' :
   m = fiapMongo(port=27036)

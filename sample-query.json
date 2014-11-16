@@ -2,14 +2,17 @@
   "fiap" : "20140401",
   "queryRQ" : {
     "type" : "storage",
-    "acceptableSize" : 10,
-    "key" : [ {
+    "acceptableSize" : 2,
+    "key" : [
+    {
       "id" : "http://example.org/light/p02",
       "attrName" : "value",
       "gteq" : "2002",
-      "lteq"  : "2003" }, {
+      "lteq"  : "2003"
+    }, {
       "id" : "http://example.org/light/p03",
       "attrName" : "time",
-      "select" : "maximum" } ]
+      "select" : "maximum"
+    } ]
   }
 }

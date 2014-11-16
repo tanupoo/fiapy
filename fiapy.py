@@ -72,7 +72,7 @@ class fiapHandler(BaseHTTPRequestHandler):
     self._log_initmsg()
     msg = 'POST is not allowed.'
     self.log_message(msg)
-    self.send_error(403, msg)
+    self.send_error(405, msg)
     return
 
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):

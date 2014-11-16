@@ -44,8 +44,10 @@ def parse_args():
     help='specify the url for the service.')
   p.add_argument('-w', action='store', dest='wsdl', default=None,
     help='specify the wsdl.')
-  p.add_argument('-x', action='store_true', dest='xml_mode', default=False,
-    help='specify the wsdl.')
+  p.add_argument('-x', action='store_true', dest='req_to_xml', default=False,
+    help='specify to send an XML request.')
+  p.add_argument('-X', action='store_true', dest='res_to_xml', default=False,
+    help='specify to output an XML response.')
   p.add_argument('-d', action='store', dest='debug', default=0,
     help='specify the debug level.')
   return p.parse_args()
@@ -83,7 +85,7 @@ if __name__ == '__main__' :
     fp = sys.stdin
   src = fp.read()
 
-  if opt.xml_mode == True:
+  if opt.req_to_xml == True:
     fiap = fiapProto.fiapProto(debug=debug)
     xml_doc = fiap.JSONtoXML(src)
     if xml_doc == None:
@@ -91,15 +93,22 @@ if __name__ == '__main__' :
       exit(1)
     ctype = 'text/xml; charset=utf-8'
     dst = postrequest(opt.server, opt.port, url=opt.url, content=xml_doc, ctype=ctype)
+    if debug > 0:
+      print 'Response:', dst
     res = fiap.XMLtoJSON(dst)
   else:
     json_doc = src
     ctype = 'text/json; charset=utf-8'
     dst = postrequest(opt.server, opt.port, url=opt.url, content=json_doc, ctype=ctype)
+    if debug > 0:
+      print 'Response:', dst
     res = dst
 
   if res != None:
-    print json.dumps(json.loads(res), indent=2)
+    if opt.res_to_xml == True:
+      print fiap.JSONtoXML(res)
+    else:
+      print json.dumps(json.loads(res), indent=2)
   else:
     print 'ERROR(FIAP): ' + fiap.emsg
 

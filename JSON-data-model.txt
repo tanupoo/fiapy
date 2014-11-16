@@ -6,7 +6,8 @@
   <data request spec> |
   <data response spec> |
   <query request spec> |
-  <query response spec> }
+  <query response spec for FETCH> |
+  <query response spec for TRAP> }
 
 <version> := "20140401"
 
@@ -20,10 +21,16 @@
 <query request spec> :=
   "queryRQ" : <storage query spec> | <stream query spec>
 
-<query response spec> :=
+<query response spec for FETCH> :=
   "queryRS" : {
     "response" : <response message>,
+    "query" : <storage query spec>,
     "point" : [ <point spec>, ... ] }
+
+<query response spec for TRAP> :=
+  "queryRS" : {
+    "response" : <response message>,
+    "query" : <storage query spec> }
 
 <point spec> := {
   "<point id>" : [ <value spec>, ... ] }
@@ -43,6 +50,7 @@
   "uuid" : <uuid>,
   "type" : "stream",
   "acceptableSize" : <acceptable size>,
+  "cursor" : <cursor>,
   "ttl" : <ttl>,
   "callbackData" : <callback data point>,
   "callbackControl" : <callback control point>,
@@ -59,6 +67,8 @@
   "gteq" : <value>,
   "select" : <"minimum" | "maximum">,
   "trap" : <"changed"> }
+
+<cursor> := "cursor is going to be specified in a storage query spec"
 
 <point id> := PointID
 
