@@ -1,0 +1,41 @@
+## turning
+
+全部パースしてタグを検索して処理するのではなく、etree.iterparse() でタグ毎に処理する方法。
+
+## as a server
+
+- accepting request (XML)
+	request (XML) なら結果を msg (XML) に入れて返す。
+	OK
+
+- accepting request (JSON)
+	
+## as a client
+
+
+
+## as a proxy
+
+fiapProto
+	response (XML) なら結果を msg (JSON) に入れて返す。
+	request (JSON) なら結果を msg (JSON) に入れて返す。
+	response (JSON) なら結果を msg (JSON) に入れて返す。
+
+fiapClient
+fiapMongo
+
+fiapy
+	FIAP server
+	XMLを投げると結果を返してくれる。
+
+fiapy -P
+
+	# header{'Host'} から本当の接続先を拾う。
+
+	proxy mode
+	request XML to request JSON
+	request JSON to request XML
+	response XML to response JSON
+	response JSON to response XML
+
+	# 中継後は header{'Via'} をつける。
