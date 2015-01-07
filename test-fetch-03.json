@@ -1,0 +1,13 @@
+{
+  "fiap" : "20140401",
+  "queryRQ" : {
+    "type" : "storage",
+    "acceptableSize" : 10,
+    "key" : [
+    {
+      "id" : "http://fiap.tanu.org/test/hoge1",
+      "attrName" : "time",
+      "select" : "maximum"
+    } ]
+  }
+}

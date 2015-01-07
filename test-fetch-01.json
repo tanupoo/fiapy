@@ -1,0 +1,14 @@
+{
+  "fiap" : "20140401",
+  "timezone" : "Aisa/Tokyo",
+  "queryRQ" : {
+    "type" : "storage",
+    "acceptableSize" : 0,
+    "key" : [ {
+      "id" : "http://tanu.org/mongodb/stat/dataSize",
+      "attrName" : "time",
+      "select" : "maximum"
+      } ]
+  }
+}
+
