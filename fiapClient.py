@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 #
 
-import fiapProto
 import sys
+import re
 import httplib, urllib
 import argparse
 import json
+import fiapProto
 
 def postrequest(host, port, url='/', content=None, ctype='text/xml; charset=utf-8',):
 
@@ -38,7 +39,7 @@ def parse_args():
     help='specify the filename of the content.')
   p.add_argument('-s', action='store', dest='server', default=None, required=True,
     help='specify the server name.')
-  p.add_argument('-p', action='store', dest='port', default=40080,
+  p.add_argument('-p', action='store', dest='port', default=8881,
     help='specify the port number of the server.')
   p.add_argument('-u', action='store', dest='url', default='/',
     help='specify the url for the service.')
@@ -73,42 +74,56 @@ def soapGetAddressLocation(wsdl):
 # echo '{ "point":"http://example.org/light/01", "time":"2014-04-01T05:50:34+09:00", "value":25.2 }' | fiapClient.py -a -p
 #
 if __name__ == '__main__' :
-  opt = parse_args()
+    opt = parse_args()
 
-  debug = opt.debug
+    debug = opt.debug
 
-  #soapGetAddressLocation(opt.wsdl)
+    #soapGetAddressLocation(opt.wsdl)
 
-  if opt.cfile != None:
-    fp = open(opt.cfile)
-  else:
-    fp = sys.stdin
-  src = fp.read()
-
-  if opt.req_to_xml == True:
-    fiap = fiapProto.fiapProto(debug=debug)
-    xml_doc = fiap.JSONtoXML(src)
-    if xml_doc == None:
-      print 'ERROR: %s' % fiap.getemsg()
-      exit(1)
-    ctype = 'text/xml; charset=utf-8'
-    dst = postrequest(opt.server, opt.port, url=opt.url, content=xml_doc, ctype=ctype)
-    if debug > 0:
-      print 'Response:', dst
-    res = fiap.XMLtoJSON(dst)
-  else:
-    json_doc = src
-    ctype = 'text/json; charset=utf-8'
-    dst = postrequest(opt.server, opt.port, url=opt.url, content=json_doc, ctype=ctype)
-    if debug > 0:
-      print 'Response:', dst
-    res = dst
-
-  if res != None:
-    if opt.res_to_xml == True:
-      print fiap.JSONtoXML(res)
+    if opt.cfile != None:
+        fp = open(opt.cfile)
     else:
-      print json.dumps(json.loads(res), indent=2)
-  else:
-    print 'ERROR(FIAP): ' + fiap.emsg
+        fp = sys.stdin
+    src = fp.read()
+
+    fiap = fiapProto.fiapProto(debug=debug)
+
+    if opt.req_to_xml == True:
+        if re.match('^\<\?xml', src):
+            xml_doc = src
+        else:
+            xml_doc = fiap.JSONtoXML(src)
+            if xml_doc == None:
+                print 'ERROR: %s' % fiap.getemsg()
+                exit(1)
+        ctype = 'text/xml; charset=utf-8'
+        dst = postrequest(opt.server, opt.port, url=opt.url, content=xml_doc, ctype=ctype)
+        if debug > 0:
+            print 'Response:', dst
+        res = fiap.XMLtoJSON(dst)
+    else:
+        if re.match('^\<\?xml', src) == None:
+            json_doc = src
+        else:
+            json_doc = fiap.XMLtoJSON(src)
+            print 'xxx'
+            print json_doc
+            print 'xxx'
+            if json_doc == None:
+                print 'ERROR: %s' % fiap.getemsg()
+                exit(1)
+        ctype = 'text/json; charset=utf-8'
+        dst = postrequest(opt.server, opt.port, url=opt.url, content=json_doc, ctype=ctype)
+        if debug > 0:
+            print 'Response:', dst
+        res = dst
+
+    if res == None:
+        print 'ERROR(FIAP): ' + fiap.emsg
+        exit(1)
+
+    if opt.res_to_xml == True:
+        print fiap.JSONtoXML(res)
+    else:
+        print json.dumps(json.loads(res), indent=2)
 
