@@ -43,14 +43,6 @@ If you want to see the result in XML, you have to add "-X" option.
 
 TBD
 
-## Tips
-
-### How to send a IEEE1888 POST request simply.
-
-if you want to send a request in XML without fiapClient.py,
-you can use test-post-xml.sh to send it.
-It just utilizes "wget --post-file".
-
 ## System requirement
 
 python version is 2.7.
@@ -109,4 +101,12 @@ fiapy deals with it as UTC timezone.
 ## JSON format
 
 see JSON-data-model.md
+
+## Tips
+
+### How to send a IEEE1888 POST request simply.
+
+if you want to send a request in XML without fiapClient.py,
+you can use test-post-xml.sh to send it.
+It just utilizes "wget --post-file".
 
