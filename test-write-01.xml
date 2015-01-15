@@ -1,0 +1,42 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+<soapenv:Body>
+<ns2:dataRQ xmlns:ns2="http://soap.fiap.org/">
+<transport xmlns="http://gutp.jp/fiap/2009/11/">
+<body>
+  <pointSet id="http://www.gutp.jp/dummy/">
+    <point id="http://www.gutp.jp/dummy/integer">
+      <value time="2014-03-20T10:40:04+09:00">16807</value>
+    </point>
+    <point id="http://www.gutp.jp/dummy/real1">
+      <value time="2014-03-20T10:40:04+09:00">282475249</value>
+    </point>
+    <point id="http://www.gutp.jp/dummy/real2">
+      <value time="2014-03-20T10:40:04+09:00">1622650073</value>
+    </point>
+  </pointSet>
+  <pointSet id="http://www.gutp.jp/yammy/">
+    <point id="http://www.gutp.jp/yammy/hoge1">
+      <value time="2014-03-20T10:40:04+09:00">16807</value>
+    </point>
+    <point id="http://www.gutp.jp/yammy/hoge2">
+      <value time="2014-03-20T10:40:04+09:00">282475249</value>
+    </point>
+    <point id="http://www.gutp.jp/yammy/hoge3">
+      <value time="2014-03-20T10:40:04+09:00">1622650073</value>
+    </point>
+  </pointSet>
+  <point id="http://www.gutp.jp/mummy/hoge1">
+    <value time="2014-03-20T10:40:04+09:00">16807</value>
+  </point>
+  <point id="http://www.gutp.jp/mummy/hoge2">
+    <value time="2014-03-20T10:40:04+09:00">28002</value>
+    <value time="2014-03-20T10:40:05+09:00">47549</value>
+    <value time="2014-03-20T10:40:06+09:00">30249</value>
+    <value time="2014-03-20T10:40:07+09:00">28249</value>
+  </point>
+</body>
+</transport>
+</ns2:dataRQ>
+</soapenv:Body>
+</soapenv:Envelope>

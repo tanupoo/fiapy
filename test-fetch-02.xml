@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
+<soapenv:Body>
+<ns2:queryRQ xmlns:ns2="http://soap.fiap.org/">
+<transport xmlns="http://gutp.jp/fiap/2009/11/">
+<header>
+  <query id="c318f263-9632-11e4-bd43-20c9d08ae84f" type="storage">
+    <key id="http://example.org/light/p02"
+      attrName="value"
+      gteq="2002"
+      lteq="2003">
+    </key>
+    <key id="http://example.org/light/p03"
+      attrName="time"
+      select="maximum">
+    </key>
+  </query>
+</header>
+</transport>
+</ns2:queryRQ>
+</soapenv:Body>
+</soapenv:Envelope>
