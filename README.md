@@ -3,6 +3,8 @@ fiapy
 
 ## What's it ?
 
+[IEEE1888](http://standards.ieee.org/findstds/standard/1888-2014.html) is a set of protocol to exchange amount of time series data between two nodes.
+
 This is an IEEE1888 implementation written in python.
 WRITE and FETCH protocols for both client and server are supported.
 TRAP protocol is under developing.
