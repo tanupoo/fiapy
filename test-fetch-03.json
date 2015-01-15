@@ -1,13 +1,24 @@
 {
-  "fiap" : "20140401",
-  "queryRQ" : {
-    "type" : "storage",
-    "acceptableSize" : 10,
-    "key" : [
-    {
-      "id" : "http://fiap.tanu.org/test/hoge1",
-      "attrName" : "time",
-      "select" : "maximum"
-    } ]
-  }
+    "fiap" : {
+        "version" : "20140401",
+        "queryRQ" : {
+            "type" : "storage",
+            "acceptableSize" : "0",
+            "key" : [
+                {
+                    "http://example.org/fiapy/test/p01" : {
+                        "attrName" : "value",
+                        "select" : "maximum"
+                    }
+                },
+                {
+                    "http://example.org/fiapy/test/p01" : {
+                        "attrName" : "value",
+                        "select" : "minimum"
+                    }
+                }
+            ]
+        }
+    }
 }
+

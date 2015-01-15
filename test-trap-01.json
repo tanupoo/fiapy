@@ -1,15 +1,24 @@
 {
-  "fiap" : "20140401",
-  "queryRQ" : {
-    "type" : "stream",
-    "acceptableSize" : 10,
-    "key" : [ {
-      "id" : "http://example.org/light/p02",
-      "attrName" : "value",
-      "gteq" : "2002",
-      "lteq"  : "2003" }, {
-      "id" : "http://example.org/light/p03",
-      "attrName" : "time",
-      "select" : "maximum" } ]
-  }
+    "fiap" : {
+        "version" : "20140401",
+        "queryRQ" : {
+            "type" : "stream",
+            "acceptableSize" : "10",
+            "key" : [
+                {
+                    "http://example.org/fiapy/test/p01" : {
+                        "attrName" : "value",
+                        "gteq" : "2002",
+                        "lteq" : "2003"
+                    }
+                },
+                {
+                    "http://example.org/fiapy/test/p02" : {
+                        "attrName" : "time",
+                        "select" : "maximum"
+                    }
+                }
+            ]
+        }
+    }
 }

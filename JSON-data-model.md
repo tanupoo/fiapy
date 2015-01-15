@@ -1,143 +1,404 @@
-REST API
-========
+Data structure and format
+=========================
 
-## JSON encoding
+<<**this is the draft version.  More discussion is needed.**>>
 
-~~~~
-{ "fiap" : <version>, 
-  <timezone>,
-  <data request spec> |
-  <data response spec> |
-  <query request spec> |
-  <query response spec for FETCH> |
-  <query response spec for TRAP> }
+The IEEE1888-2014 defines the XML format to represent the IEEE1888 data model.
+This memo defines another two formats.
 
-<version> := "20140401"
+    1) JSON format
+    2) URL format
 
-<timezone> := "timezone" : <tz string>
-  option
+The JSON format is defined in the next section.
 
-<data request spec> :=
-  "dataRQ" : [ <point spec>, ... ]
+## JSON format
 
-<data response spec> :=
-  "dataRS" : {
-    "response" : <response message> }
+The JSON format is used for both a request and response of the POST method.
+And, it is also used for a response of the GET method.
 
-<query request spec> :=
-  "queryRQ" : <storage query spec> |
-  <stream query spec>
+### Unsupported functions
 
-<query response spec for FETCH> :=
-  "queryRS" : {
-    "response" : <response message>,
-    "query" : <storage query spec>,
-    "point" : { <point spec>, ... } }
+The JSON format is trying to support all of functions defined by the XML format.
+TBD.
 
-<query response spec for TRAP> :=
-  "queryRS" : {
-    "response" : <response message>,
-    "query" : <stream query spec> }
+### Notation
 
-<point spec> :=
-  "<point id>" : [ <value spec>, ... ]
-
-<value spec> := {
-  "time" : <time spec>,
-  "value" : <value> }
-
-<storage query spec> := {
-  "uuid" : <uuid>,
-  "type" : "storage",
-  "acceptableSize" : <acceptable size>,
-  "cursor" : <cursor>,
-  "key" : [ <key spec>, ... ] }
-
-<stream query spec> := {
-  "uuid" : <uuid>,
-  "type" : "stream",
-  "acceptableSize" : <acceptable size>,
-  "cursor" : <cursor>,
-  "ttl" : <ttl>,
-  "callbackData" : <callback data point>,
-  "callbackControl" : <callback control point>,
-  "key" : [ <key spec> ... ] }
-
-<key spec> := {
-  "id" : <point id>,
-  "attrName" : <attribute name>,
-  "eq" : <value>,
-  "ne" : <value>,
-  "lt" : <value>,
-  "gt" : <value>,
-  "lteq" : <value>,
-  "gteq" : <value>,
-  "select" : <"minimum" | "maximum">,
-  "trap" : <"changed"> }
-
-<cursor> := "cursor is going to be specified in a storage query spec"
-
-<point id> := PointID
-
-<time spec> := ISO8601 date and time string
-    it should be with a timezone indicator.
-    e.g. 2014-11-21T07:54:03+0900
-
-<value> := value string
-    a double quatation is not allowed for the value data.
-~~~~
-
-### consice encoding for GET response
-
-~~~~
-{ "fiap" : <version>, 
-  <query response spec for FETCH> }
-
-<query response spec for FETCH> :=
-  "queryRS" : {
-    "response" : <response message>,
-    "point" : { <point spec>, ... } }
-
-<query spec> is optional.
-~~~~
-
-## response message
-
-RFC2616 section 10
-
-## example
+### Definition
 
 ~~~~
     {
-      "fiap": {
-        "version": "20140401",
-        "queryRS": {
-          "query": {
-            "uuid": "1234-5678-5678-5678-5678-5678"
-          }
-          "point": {
-            "http://fiap.tanu.org/test/alps01/temp": [
-              { "time": "2014-11-21T07:54:03+0900", "value": "26.0" },
-              { "time": "2014-11-21T07:55:00+0900", "value": "26.5" }
-            ],
-            "http://fiap.tanu.org/test/alps01/light": [
-              { "time": "2014-11-21T07:54:03+0900", "value": "1301" },
-              { "time": "2014-11-21T07:55:00+0900", "value": "1400" }
-            ]
-          }
+        "fiap" : {
+            <version spec>, 
+            <method spec>
         }
-      }
+    }
+
+    <method spec> :=
+        <data request spec> |
+        <data response spec> |
+        <query request spec> |
+        <query response spec>
+
+    <data request spec> :=
+        "dataRQ" : { <point spec>, ... }
+
+    <data response spec> :=
+        "dataRS" : { <response status spec> }
+
+    <query request spec> :=
+        "queryRQ" : <query spec>
+
+    <query response spec> :=
+        "queryRS" : {
+            <response status message>,
+            <query request spec>,
+            <point spec>, ...
+        }
+
+    <point spec> :=
+        "<point id>" : [ <value spec>, ... ]
+
+    <value spec> := {
+        "time" : <time spec>,
+        "value" : <value>
+    }
+
+    <query spec> := {
+        "type" : <query type spec>,
+        "key" : [ <key spec>, ... ]
+        <uuid spec>,
+        <acceptableSize spec>,
+        <cursor spec>,
+        <ttl spec>,
+        <callbackData spec>,
+        <callbackControl spec>,
+    }
+
+    <query type spec> := "storage" | "stream"
+
+    <key spec> := {
+        "<point id>" : { <attribute spec>, ... }
+    }
+
+    <attribute spec> :=
+        "attrName" : <attribute name>,
+        <condition spec>
+
+    <condition spec> :=
+        "eq" : <value> |
+        "ne" : <value> |
+        "lt" : <value> |
+        "gt" : <value> |
+        "lteq" : <value> |
+        "gteq" : <value> |
+        "select" : "maximum" |
+        "select" : "minimum" |
+        "state" : "changed"
+
+    <uuid spec> := "uuid" : <uuid>
+
+    <acceptableSize spec> := "acceptableSize" : <acceptable size>,
+
+    <cursor spec> := "cursor" : <cursor>
+
+    <ttl spec> := "ttl" : <ttl>
+
+    <callbackData spec> := "callbackData" : <callback data point>
+
+    <callbackControl spec> := "callbackControl" : <callback control point>
+
+~~~~
+
+<version spec> specifies the version of the JSON format.
+All components supporting this specification must set "20140401".
+
+<method spec> specifies the method of the JSON format.
+one of four entries must be specified.
+
+<query request spec> in <query response spec> is optional.
+
+<time spec> should conform to the ISO8601 date and time string.
+A timezone indicator should be used for large scale interoperability.
+For interoperability, this specification recommends to use the following format.
+
+~~~~
+    2014-11-21T07:54:03+0900
+~~~~
+
+The format of <point id> must confom to the IEEE1888 specification.
+
+~~~~
+    "http://fiap.example.org/test/home/light"
+~~~~
+
+<point spec> in <query response spec> is valid for the FETCH protocol.
+    TBC.
+
+<query type spec> must be either "storage" or "stream".
+
+<attribute spec> is optional.
+
+TBD: if you want to specify an "OR" condition for a single point id.
+you need to specify two keys.
+e.g. getting both a maximum value and a minimum value.
+~~~~
+    "key" : [
+        { "a": { "attrName":"value", "select":"maximum" } },
+        { "a": { "attrName":"value", "select":"minimum" } }
+    ]
+~~~~
+
+<condition spec> must be formed by some of the entries.
+each etnry must be used at once.
+"state" : "changed" is usually used to initiate the TRAP protocol.
+
+<value> is a string representing the value.
+it must be quoted by a double quotation and
+a double quatation is not allowed in the content of the value.
+
+<uuid spec> is optional.
+
+<acceptableSize spec> is optional.
+
+<cursor spec> is optional and valid to use when the query method is used.
+    Should this description be put in the IEEE1888 base specification.  TBC.
+the content of <cursor> depends on the implementation.
+
+<ttl spec>, <callbackData spec> and <callbackControl spec> are valid in the TRAP protocol.
+
+## response message
+
+if the request is acceptable and no error is found, the reponse message must be "200 OK".
+other messages may be referred to the setion 10 of RFC2616.
+
+### consice format for GET response
+
+The JSON format can be simplified in the case of a reponse to the GET method.
+
+~~~~
+    {
+        "fiap" : {
+            <version spec>, 
+            "queryRS" : {
+                <response status spec>,
+                <point spec>, ...
+            }
+        }
     }
 ~~~~
 
-## URL encoding
+<response status spec> should be present.
 
-don't specify a complicated query.
+### (TBD) example 1
+
+- a query request message
+
+~~~~
+    {
+        "fiap" : {
+            "version" : "20140401",
+            "queryRQ" : {
+                "type" : "storage",
+                "acceptableSize" : "2",
+                "key" : {
+                    "http://example.org/light/p02" : {
+                        "attrName" : "value",
+                        "gteq" : "2002",
+                        "lteq"  : "2003"
+                    },
+                    "http://example.org/light/p03" : {
+                        "attrName" : "time",
+                        "select" : "maximum"
+                    }
+                }
+            }
+        }
+    }
+~~~~
+
+- a reponse message of a query message
+
+~~~~
+    {
+        "fiap": {
+            "version": "20140401",
+            "queryRS": {
+                "query": {
+                    "type": "storage"
+                }
+                "point": {
+                    "http://fiap.tanu.org/test/alps01/temp": [
+                        { "time": "2014-11-21T07:54:03+0900", "value": "26.0" },
+                        { "time": "2014-11-21T07:55:00+0900", "value": "26.5" }
+                    ],
+                    "http://fiap.tanu.org/test/alps01/light": [
+                      { "time": "2014-11-21T07:54:03+0900", "value": "1301" },
+                      { "time": "2014-11-21T07:55:00+0900", "value": "1400" }
+                    ]
+                }
+            }
+        }
+    }
+~~~~
+
+### (TBD) example 2
+
+** currently implemented. **
+
+- a query request message
+
+~~~~
+    {
+        "fiap" : {
+            "version" : "20140401",
+            "queryRQ" : {
+                "type" : "storage",
+                "acceptableSize" : "2",
+                "key" : [
+                    {
+                        "http://example.org/light/p02" : {
+                            "attrName" : "value",
+                            "gteq" : "2002",
+                            "lteq"  : "2003"
+                        }
+                    },
+                    {
+                        "http://example.org/light/p03" : {
+                            "attrName" : "time",
+                            "select" : "maximum"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+~~~~
+
+- a reponse message of a query message
+
+~~~~
+    {
+        "fiap": {
+            "version": "20140401",
+            "queryRS": {
+                "query": {
+                    "type": "storage"
+                }
+                "point": [
+                    {
+                        "http://fiap.tanu.org/test/alps01/temp": [
+                            { "time": "2014-11-21T07:54:03+0900", "value": "26.0" },
+                            { "time": "2014-11-21T07:55:00+0900", "value": "26.5" }
+                        ],
+                    },
+                    {
+                        "http://fiap.tanu.org/test/alps01/light": [
+                            { "time": "2014-11-21T07:54:03+0900", "value": "1301" },
+                            { "time": "2014-11-21T07:55:00+0900", "value": "1400" }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+~~~~
+
+### (TBD) example 3
+
+- a query request message
+
+~~~~
+    {
+        "fiap" : {
+            "version" : "20140401",
+            "queryRQ" : {
+                "type" : "storage",
+                "acceptableSize" : "2",
+                "key" : [
+                    {
+                        "id" : "http://example.org/light/p02",
+                        "attrName" : "value",
+                        "gteq" : "2002",
+                        "lteq"  : "2003"
+                    },
+                    {
+                        "kd" : "http://example.org/light/p03",
+                        "attrName" : "time",
+                        "select" : "maximum"
+                    }
+                ]
+            }
+        }
+    }
+~~~~
+
+- a reponse message of a query message
+
+~~~~
+    {
+        "fiap": {
+            "version": "20140401",
+            "queryRS": {
+                "query": {
+                    "type": "storage"
+                }
+                "point": [
+                    {
+                        "http://fiap.tanu.org/test/alps01/temp": [
+                            { "time": "2014-11-21T07:54:03+0900", "value": "26.0" },
+                            { "time": "2014-11-21T07:55:00+0900", "value": "26.5" }
+                        ],
+                    },
+                    {
+                        "http://fiap.tanu.org/test/alps01/light": [
+                            { "time": "2014-11-21T07:54:03+0900", "value": "1301" },
+                            { "time": "2014-11-21T07:55:00+0900", "value": "1400" }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+~~~~
+
+### example
+
+- a write request message
+
+~~~~
+    {
+        "fiap" : {
+            "version" : "20140401",
+            "dataRQ" : {
+                "http://example.org/light/p01" : [
+                    { "time" : "2014-04-01T16:50:34+09:00", "value" : "1000" }
+                ],
+                "http://example.org/light/p02" : [
+                    { "time" : "2014-04-01T16:50:34+09:00", "value" : "2001" },
+                    { "time" : "2014-04-01T16:51:34+09:00", "value" : "2002" },
+                    { "time" : "2014-04-01T16:52:34+09:00", "value" : "2003" },
+                    { "time" : "2014-04-01T16:53:34+09:00", "value" : "2004" }
+                ],
+                "http://example.org/light/p03" : [
+                    { "time" : "2014-04-01T16:50:34+09:00", "value" : "3001" },
+                    { "time" : "2014-04-01T16:51:34+09:00", "value" : "3001" },
+                    { "time" : "2014-04-01T16:52:34+09:00", "value" : "3002" }
+                ]
+            }
+        }
+    }
+~~~~
+
+## URL format
+
+It doesn't support all functions.
+It allows the requester to fetch a set of data by the GET method.
 
 ### proposed schema name
 
 - igem (Internet Green Environment Messaging)
 - image (Internet Messaging for the Advanced Green Environment)
+- imase (Internet Messaging for the Advanced Smart Energy)
 
 ### query
 
@@ -186,7 +447,7 @@ t=<time spec>
 
 ### example
 
-RFC 2396 encoding should be used.
+RFC 2396 format should be used.
 
 - fetch
 
@@ -201,12 +462,11 @@ http://server.example.org/?k=igem://example.org/test/temperature&v="26.5"&t=2014
 ### POST
 
 it supports full IEEE1888 data and query method.
-The encoding is either JSON or XML.
-in the case of XML encoding, it is identical to IEEE1888 base specification.
+The format is either JSON or XML.
 
-Content-Type must be text/json when JSON encoding is used.
+Content-Type must be text/json when JSON format is used.
 
-if a requester sends a query by JSON encoding, the responder must respond data by JSON encoding or a HTTP error code with 415 (Unsupported Media Type). 
+if a requester sends a query by JSON format, the responder must respond data by JSON format or a HTTP error code with 415 (Unsupported Media Type). 
 
 ### GET
 
@@ -214,8 +474,8 @@ it supports simple IEEE1888 query method.
 it allows to fetch a set of data of a single point id,
 or to fetch a set of data of identical condition in each point ids.
 
-a requester sends a request by the URL encoding.
-a responder responds data by JSON encoding.
+a requester sends a request by the URL format.
+a responder responds data by JSON format.
 
 typically, a requester uses this method to fetch a latest data against a point id specified in the URL.
 

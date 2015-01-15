@@ -5,10 +5,10 @@ IEEE1888 python implementation with both data models, XML and JSON.
 
 ## TODO
 
-- need to implement TRAP protocol, trapy.
-- make timezone handling sure.
-- write manual
-- cursor
+- need to check whether it could deal with duplicate keys in a query.
+- consider the error message when the translation error happens.
+- consider the error message when the method hasn't been identified.
+- implement TRAP protocol, trapy.
 
 ### fiapy.py
 
@@ -34,68 +34,10 @@ fiapy deals with it as UTC timezone.
 
 ## FIAP data model in JSON
 
-{ "fiap" : <version>, 
-  "timezone" : <tz string>, 
-  <data request spec> |
-  <data response spec> |
-  <query request spec> |
-  <query response spec> }
+see JSON-data-model.md
 
-<version> := "20140401"
+##
 
-<data request spec> :=
-  "dataRQ" : [ <point spec>, ... ]
+how to send POST request in XML
 
-<data response spec> :=
-  "dataRS" : {
-    "response" : <response message> }
-
-<query request spec> :=
-  "queryRQ" : <storage query spec> | <stream query spec>
-
-<query response spec> :=
-  "queryRS" : {
-    "response" : <response message>,
-    "point" : [ <point spec>, ... ] }
-
-<point spec> := {
-  "<point id>" : [ <value spec>, ... ] }
-
-<value spec> := {
-  "value" : <value>,
-  "time" : <time spec> }
-
-<storage query spec> := {
-  "uuid" : <uuid>,
-  "type" : "storage",
-  "acceptableSize" : <acceptable size>,
-  "cursor" : <cursor>,
-  "key" : [ <key spec>, ... ] }
-
-<stream query spec> := {
-  "uuid" : <uuid>,
-  "type" : "stream",
-  "acceptableSize" : <acceptable size>,
-  "ttl" : <ttl>,
-  "callbackData" : <callback data point>,
-  "callbackControl" : <callback control point>,
-  "key" : [ <key spec> ... ] }
-
-<key spec> := {
-  "id" : <point id>,
-  "attrName" : <attribute name>,
-  "eq" : <value>,
-  "ne" : <value>,
-  "lt" : <value>,
-  "gt" : <value>,
-  "lteq" : <value>,
-  "gteq" : <value>,
-  "select" : <"minimum" | "maximum">,
-  "trap" : <"changed"> }
-
-<point id> := PointID
-
-<time spec> := ISO8601 date and time string
-
-<value> := value string
-
+wget --quiet --output-document=- --header='Content-Type: text/xml' --post-file=test-fetch-01.xml http://localhost:18880/
