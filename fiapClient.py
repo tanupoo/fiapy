@@ -38,11 +38,11 @@ def parse_args():
   p.add_argument('-c', action='store', dest='cfile', default=None,
     help='specify the filename of the content.')
   p.add_argument('-s', action='store', dest='server', default=None, required=True,
-    help='specify the server name.')
-  p.add_argument('-p', action='store', dest='port', default=8881,
+    help='specify the server name in the URL.')
+  p.add_argument('-p', action='store', dest='port', default=18880,
     help='specify the port number of the server.')
   p.add_argument('-u', action='store', dest='url', default='/',
-    help='specify the url for the service.')
+    help='specify the path of the service in the URL.')
   p.add_argument('-w', action='store', dest='wsdl', default=None,
     help='specify the wsdl.')
   p.add_argument('-x', action='store_true', dest='req_to_xml', default=False,
@@ -85,45 +85,57 @@ if __name__ == '__main__' :
     else:
         fp = sys.stdin
     src = fp.read()
+    if src == None:
+        print 'ERROR: src document is nothing'
+        exit(1)
 
     fiap = fiapProto.fiapProto(debug=debug)
 
+    #
+    # make a request
+    #
+    req_doc = ''
     if opt.req_to_xml == True:
-        if re.match('^\<\?xml', src):
-            xml_doc = src
-        else:
-            xml_doc = fiap.JSONtoXML(src)
-            if xml_doc == None:
-                print 'ERROR: %s' % fiap.getemsg()
-                exit(1)
         ctype = 'text/xml; charset=utf-8'
-        dst = postrequest(opt.server, opt.port, url=opt.url, content=xml_doc, ctype=ctype)
-        if debug > 0:
-            print 'Response:', dst
-        res = fiap.XMLtoJSON(dst)
-    else:
-        if re.match('^\<\?xml', src) == None:
-            json_doc = src
+        if re.match('^\<\?xml', src):
+            req_doc = src
         else:
-            json_doc = fiap.XMLtoJSON(src)
-            print 'xxx'
-            print json_doc
-            print 'xxx'
-            if json_doc == None:
-                print 'ERROR: %s' % fiap.getemsg()
-                exit(1)
+            req_doc = fiap.JSONtoXML(src)
+    else:
         ctype = 'text/json; charset=utf-8'
-        dst = postrequest(opt.server, opt.port, url=opt.url, content=json_doc, ctype=ctype)
-        if debug > 0:
-            print 'Response:', dst
-        res = dst
+        if re.match('^\<\?xml', src) == None:
+            req_doc = src
+        else:
+            req_doc = fiap.XMLtoJSON(src)
+    if req_doc == None:
+        print 'ERROR: %s' % fiap.getemsg()
+        exit(1)
 
+    #
+    # send the request and get a response.
+    #
+    res = postrequest(opt.server, opt.port, url=opt.url, content=req_doc, ctype=ctype)
     if res == None:
         print 'ERROR(FIAP): ' + fiap.emsg
         exit(1)
+    if debug > 0:
+        print 'Response:', res
 
+    #
+    # print the response
+    #
     if opt.res_to_xml == True:
-        print fiap.JSONtoXML(res)
+        if re.match('^\<\?xml', res):
+            res_doc = res
+        else:
+            res_doc = fiap.JSONtoXML(res)
     else:
-        print json.dumps(json.loads(res), indent=2)
-
+        if re.match('^\<\?xml', res):
+            res_doc = fiap.XMLtoJSON(res)
+        else:
+            res_doc = res
+        res_doc = json.dumps(json.loads(res_doc), indent=2)
+    if req_doc == None:
+        print 'ERROR: %s' % fiap.getemsg()
+        exit(1)
+    print res_doc

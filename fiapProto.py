@@ -73,7 +73,10 @@ class fiapProto():
         self.method_name = None
 
     #
-    # parse JSON and process it, then response in JSON.
+    # parse JSON format and process it, then response in JSON format.
+    #
+    # @return str success and it is the response message in JSON format.
+    # @return None should raise HTTP error at the caller.
     #
     def serverParseJSON(self, doc):
         self._initmsg()
@@ -90,39 +93,47 @@ class fiapProto():
         # start to parse each method
         #
         handler = {
-            _FIAP_METHOD_DATARQ : self._serverParseJson_DataRQ,
-            _FIAP_METHOD_QUERYRQ : self._serverParseJson_QueryRQ }
-        return json.dumps(self._parseJson(j_root, handler))
+            _FIAP_METHOD_DATARQ : self._serverParseJSON_DataRQ,
+            _FIAP_METHOD_QUERYRQ : self._serverParseJSON_QueryRQ }
+        ret = self._parseJSON(j_root, handler)
+        if ret == None:
+            return ret
+        return json.dumps(ret)
 
     #
     # handler to parse JSON
     #
-    def _parseJson(self, j0, handler):
+    def _parseJSON(self, j0, handler):
         # XXX copy just in case.
-        j_root = copy.deepcopy(j0)
+        #if j0.has_key('fiap') == False:
+        #    return None
+        #j_root = copy.deepcopy(j0['fiap'])
+        j_root = j0.get('fiap')
+        if j_root == None:
+            return None
         #
         for mname, func in handler.iteritems():
-            if j_root.has_key(mname):
-                if self.strict_check == True and self._checkJsonBase(j_root) == False:
-                    self._setJsonResponse(mname, _HTTP_CODE_BAD_REQUEST, self.emsg)
-                    print self.doc
+            j_body = j_root.get(mname)
+            if j_body:
+                if self.strict_check == True and self._checkJSONBase(j_root) == False:
+                    self._setJSONResponse(mname, _HTTP_CODE_BAD_REQUEST, self.emsg)
                     return self.doc
-                return func(j_root, j_root[mname])
+                return func(j_root, j_body)
         # error if it comes here.
         self.emsg = 'valid method name is not specified. (%s)' % self._tostring(j_root)
-        self._setJsonResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_METHOD_NOT_ALLOWED, self.emsg)
+        self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_METHOD_NOT_ALLOWED, self.emsg)
         return self.doc
 
     #
     # basic check of FIAP JSON
     #
-    def _checkJsonBase(self, j_root):
-        if j_root.has_key('fiap') == False:
-            self.emsg = 'fiap key is not specified.'
+    def _checkJSONBase(self, j_root):
+        if j_root.has_key('version') == False:
+            self.emsg = 'version key is not specified.'
             return False
-        v = j_root.get('fiap')
+        v = j_root['version']
         if v != _FIAPY_FIAP_VERSION:
-            self.emsg = 'fiap version must be %s, but %s' % (_FIAPY_FIAP_VERSION, v)
+            self.emsg = 'version must be %s, but %s' % (_FIAPY_FIAP_VERSION, v)
             return False
         #if len(j_root) != 1:
         #  self.emsg = 'only one method is allowed. (%s)' % j_root
@@ -132,40 +143,40 @@ class fiapProto():
     #
     # parse JSON query request
     #
-    def _serverParseJson_QueryRQ(self, j_root, j_query):
+    def _serverParseJSON_QueryRQ(self, j_root, j_body):
         #
         # check the value of the type attribute.
         # either storage or stream is valie.
         #
-        k_type = j_query.get('type')
+        k_type = j_body.get('type')
         if k_type == None:
             self.emsg = 'type is not specified.'
-            self._setJsonResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_BAD_REQUEST, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_BAD_REQUEST, self.emsg)
             return self.doc
         elif k_type == 'storage':
-            return self._serverParseJson_FETCH(j_query)
+            return self._serverParseJSON_FETCH(j_body)
         elif k_type == 'stream':
-            return self._serverParseJson_TRAP(j_query)
+            return self._serverParseJSON_TRAP(j_body)
         else:
             self.emsg = 'invalid type is specified. [%s]' % type
-            self._setJsonResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_BAD_REQUEST, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_BAD_REQUEST, self.emsg)
             return self.doc
 
     #
     # parse JSON FETCH protocol
     #
-    def _serverParseJson_FETCH(self, j_query):
-        k_limit = self._getQueryAcceptableSize(j_query.get('acceptableSize'))
-        k_skip = self._getQueryCursor(j_query.get('cursor'))
+    def _serverParseJSON_FETCH(self, j_body):
+        k_limit = self._getQueryAcceptableSize(j_body)
+        k_skip = self._getQueryCursor(j_body.get('cursor'))
         #
         # copy the query for the response.
         #
-        keys = self._getKeyList(j_query.get('key'))
+        keys = self._getKey_JSONList(j_body.get('key'))
         if keys == None:
-            self._setJsonResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_BAD_REQUEST, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_BAD_REQUEST, self.emsg)
             return self.doc
         j_plist = []
-        j_rquery = []
+        j_rquery = j_body
         total = 0
         try:
             m = fiapMongo.fiapMongo(**_FIAPY_MONGODB)
@@ -177,7 +188,7 @@ class fiapProto():
                     cursor = m.iterPoint(k, k_limit, k_skip)
                 except fiapMongo.fiapMongoException as et:
                     self.emsg = '%s (%s)' % (_FIAPY_EMSG_INTERNAL_ACCESS_DATA, et)
-                    self._setJsonResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_INTERNAL_ERROR, self.emsg)
+                    self._setJSONResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_INTERNAL_ERROR, self.emsg)
                     return self.doc
                 j_value = []
                 for i in cursor:
@@ -191,36 +202,35 @@ class fiapProto():
                 j_plist.append({ k['pid'] : j_value })
                 if k['next'] != 0:
                     k['query']['cursor'] = k['next']
-                j_rquery.append({ 'query' : k['query'] })
             if self.debug > 0:
                 for k in keys:
                     print 'DEBUG: search key =', k
         except fiapMongo.fiapMongoException as et:
             self.emsg = 'An error occured when it accesses to the DB. (%s)' % et
-            self._setJsonResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_INTERNAL_ERROR, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_INTERNAL_ERROR, self.emsg)
             return self.doc
         #
         if total == 0:
             self.emsg = 'There is no matched point for the query.'
-            self._setJsonResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_NOT_FOUND, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_NOT_FOUND, self.emsg)
             return self.doc
-        self._setJsonResponse(_FIAP_METHOD_QUERYRS, 200, 'OK', { 'query' : j_rquery, 'point' : j_plist })
+        self._setJSONResponse(_FIAP_METHOD_QUERYRS, 200, 'OK', { 'query' : j_rquery, 'point' : j_plist })
         return self.doc
 
     #
     # parse JSON TRAP protocol
     #
-    def _serverParseJson_TRAP(self, j_query):
+    def _serverParseJSON_TRAP(self, j_query):
         self.emsg = 'TRAP protocol is not supported yet.'
-        self._setJsonResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_NOT_IMPLEMENTED, self.emsg)
+        self._setJSONResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_NOT_IMPLEMENTED, self.emsg)
         return self.doc
 
     #
     # parse JSON data request
     #
-    def _serverParseJson_DataRQ(self, j_root, j_pchunk):
+    def _serverParseJSON_DataRQ(self, j_root, j_pchunk):
         if self._fixTimeInPchunk(j_pchunk) != True:
-                return self.doc
+            return self.doc
         #
         # prepare an interface for MongoDB 
         #
@@ -231,43 +241,42 @@ class fiapProto():
                 total = m.insertPointChunk(j_pchunk)
             except fiapMongo.fiapMongoException as et:
                 self.emsg = '%s (%s)' % (_FIAPY_EMSG_INTERNAL_ACCESS_DATA, et)
-                self._setJsonResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_INTERNAL_ERROR, self.emsg)
+                self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_INTERNAL_ERROR, self.emsg)
                 return self.doc
         except fiapMongo.fiapMongoException as et:
             self.emsg = '%s (%s)' % (_FIAPY_EMSG_INTERNAL_ACCESS_DATA, et)
-            self._setJsonResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_INTERNAL_ERROR, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_INTERNAL_ERROR, self.emsg)
             return self.doc
         #
         # response to the data request in JSON
         #
         if total == 0:
             self.emsg = 'There is no point saved.'
-            self._setJsonResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_NOT_FOUND, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_NOT_FOUND, self.emsg)
             return self.doc
         self.emsg = ''
-        self._setJsonResponse(_FIAP_METHOD_DATARS, 200, 'OK')
+        self._setJSONResponse(_FIAP_METHOD_DATARS, 200, 'OK')
         return self.doc
 
     #
     # convert an ISO8601 string into a datetime object.
     #
     def _fixTimeInPchunk(self, j_pchunk):
-        for p in j_pchunk:
-            pid = p.keys()[0]
-            for v in p[pid]:
+        for pid, vs in j_pchunk.iteritems():
+            for v in vs:
                 if v.has_key('time') == False:
                     self.emsg = 'a json key, time is not specified. (%s)' % self._tostring(i[pid])
-                    self._setJsonResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
+                    self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
                     return False
                 t = getutc(v['time'])
                 if t == None:
                     self.emsg = 'invalid time string is found. (%s)' % v['time']
-                    self._setJsonResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
+                    self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
                     return False
                 v['time'] = t
         return True
 
-    def _setJsonResponse(self, method, code, msg, add=None):
+    def _setJSONResponse(self, method, code, msg, add=None):
         msg = '%s %s' % (code, msg)
         if add != None:
             body = { 'response' : msg }
@@ -275,7 +284,7 @@ class fiapProto():
                 body[k] = v
         else:
             body = { 'response' : msg }
-        self.doc = { 'fiap' : _FIAPY_FIAP_VERSION, method : body }
+        self.doc = { 'fiap': { 'version': _FIAPY_FIAP_VERSION, method : body }}
 
     #
     # parse JSON binding format and convert to XML
@@ -289,12 +298,12 @@ class fiapProto():
             j_root = json.loads(doc)
         except ValueError as et:
             self.emsg = 'error in JSON parser, %s' % et.message
-            self._setJsonResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
             return None
         except Exception as et:
             print_exception(et)
             self.emsg = 'error in JSON parser, %s' % et.message
-            self._setJsonResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
             return None
         #
         # start to parse each method
@@ -304,9 +313,9 @@ class fiapProto():
             _FIAP_METHOD_DATARS : self._JSONtoXML_DataRS,
             _FIAP_METHOD_QUERYRQ : self._JSONtoXML_QueryRQ,
             _FIAP_METHOD_QUERYRS : self._JSONtoXML_QueryRS }
-        e_newroot = self._parseJson(j_root, handler)
+        e_newroot = self._parseJSON(j_root, handler)
         if e_newroot == None:
-            self._setJsonResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
             return None
         self.doc = self.getXMLdoc(e_newroot)
         return self.doc
@@ -317,33 +326,33 @@ class fiapProto():
     # input: json root
     # output: e_newroot or None.
     #
-    def _JSONtoXML_QueryRQ(self, j_root, j_query):
+    def _JSONtoXML_QueryRQ(self, j_root, j_body):
         e_newroot, e_header, e_body = self.getNewXMLdoc(_FIAP_METHOD_QUERYRQ)
         attr = {}
         attr['id'] = str(uuid.uuid1())
         for k in [ 'type', 'acceptableSize', 'cursor', 'ttl', 'callbackData', 'callbackControl' ]:
-            if j_query.has_key(k) == False:
-                continue
-            attr[k] = str(j_query.pop(k))
+            i = j_body.get(k)
+            if i != None:
+                attr[k] = i
         e_query = ElementTree.SubElement(e_header, '{%s}query' % NS_FIAP, attr)
         #
         # key
         #
-        j_key = j_query.pop('key')
-        if len(j_query) != 0:
-            self.emsg = 'only one key of json key is allowed in the query spec. (%s)' % j_query
+        j_key_list = j_body.get('key')
+        if j_key_list == None:
+            self.emsg = 'a key is not specified. (%s)' % j_body
             return None
-        while len(j_key) != 0:
-            attr = {}
-            v = j_key.pop(0)
-            for k in [ 'id', 'attrName', 'eq', 'ne', 'lt', 'gt', 'lteq', 'gteq', 'select', 'trap' ]:
-                if v.has_key(k) == False:
-                    continue
-                attr[k] = v.pop(k)
-            if len(v) != 0:
-                self.emsg = 'there is something unknown json key in the key spec. (%s)' % v
-                return None
-            ElementTree.SubElement(e_query, '{%s}key' % NS_FIAP, attr)
+        for key_spec in j_key_list:
+            for pid, vals in key_spec.iteritems():
+                attr = {'id': pid}
+                for k in [ 'attrName', 'eq', 'ne', 'lt', 'gt', 'lteq', 'gteq', 'select', 'trap' ]:
+                    if vals.has_key(k) == False:
+                        continue
+                    attr[k] = vals.pop(k)
+                if len(vals) != 0:
+                    self.emsg = 'unknown json key in the key spec remains. (%s)' % vals
+                    return None
+                ElementTree.SubElement(e_query, '{%s}key' % NS_FIAP, attr)
         return e_newroot
 
     #
@@ -352,43 +361,35 @@ class fiapProto():
     # input: json root
     # output: e_newroot or None.
     #
-    def _JSONtoXML_QueryRS(self, j_root, j_query):
+    def _JSONtoXML_QueryRS(self, j_root, j_body):
         e_newroot, e_header, e_body = self.getNewXMLdoc(_FIAP_METHOD_QUERYRS)
         attr = {}
-        j_res = j_query.pop('response')
-        if j_res == 'OK':
-            e_res = ElementTree.SubElement(e_header, '{%s}OK' % NS_FIAP)
-            while len(j_query) != 0:
-                j_point = j_query.pop('point')
-                pid = j_point.keys()[0]
-                e_point = ElementTree.SubElement(e_body, '{%s}point' % NS_FIAP, {'id': pid})
-                j_value = j_point.pop(pid)
-                v = None
-                while len(j_value) != 0:
-                    v = j_value.pop(0)
-                    while len(v) != 0:
-                        if v.has_key('time') == False:
-                            self.emsg = 'time key is not specified in the value spec. [%s]' % v
-                            return None
-                        if v.has_key('value') == False:
-                            self.emsg = 'value key is not specified in the vlaue spec. [%s]' % v
-                            return None
-                        t = getutc(v.pop('time'))
-                        e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : t.strftime('%Y-%m-%dT%H:%M:%S%z') } )
-                        e_value.text = v.pop('value')
-                        if len(v) != 0:
-                            self.emsg = 'there is something unknown json key in the value spec. (%s)' % v
-                            return None
-            if v == None:
-                self.emsg = 'there is no point in the reponse. (%s)' % v
-                return None
-        else:
-            if len(j_query) != 0:
-                self.emsg = 'only single response of json key is allowed in error case. (%s)' % j0
-                return None
+        j_res = j_body.pop('response')
+        if 'OK' not in j_res.split():
             self._getErrorObject(e_header, 'error', j_res)
             e_res = ElementTree.SubElement(e_header, '{%s}error' % NS_FIAP)
             e_res.text = j_res
+            return e_newroot
+        #
+        # parse each 'point'
+        #
+        e_res = ElementTree.SubElement(e_header, '{%s}OK' % NS_FIAP)
+        j_point = j_body.get('point')
+        if j_point == None:
+            self.emsg = 'there is no point in the reponse. (%s)' % v
+            return None
+        for plist in j_point:
+            for pid, j_vslist in plist.iteritems():
+                e_point = ElementTree.SubElement(e_body, '{%s}point' % NS_FIAP, {'id': pid})
+                for vs in j_vslist:
+                    t = vs.get('time')
+                    v = vs.get('value')
+                    if t == None or v == None:
+                        print 'ERROR: time or value are not specified. [%s]' % vs
+                        return None
+                    dt = getutc(t)
+                    e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : dt.strftime('%Y-%m-%dT%H:%M:%S%z') } )
+                    e_value.text = v
         return e_newroot
 
     #
@@ -397,29 +398,21 @@ class fiapProto():
     # input: json root
     # output: e_newroot or None.
     #
-    def _JSONtoXML_DataRQ(self, j_root, j_data):
+    def _JSONtoXML_DataRQ(self, j_root, j_body):
         e_newroot, e_header, e_body = self.getNewXMLdoc(_FIAP_METHOD_DATARQ)
         attr = {}
-        while len(j_data) != 0:
-            j_point = j_data.pop(0)
-            pid = j_point.keys()[0]
+        for pid, j_vslist in j_body.iteritems():
             e_point = ElementTree.SubElement(e_body, '{%s}point' % NS_FIAP, {'id': pid})
-            j_value = j_point.pop(pid)
-            while len(j_value) != 0:
-                v = j_value.pop(0)
-                while len(v) != 0:
-                    if v.has_key('time') == False:
-                        self.emsg = 'time key is not specified in the value spec. [%s]' % v
-                        return None
-                    if v.has_key('value') == False:
-                        self.emsg = 'value key is not specified in the vlaue spec. [%s]' % v
-                        return None
-                    t = getutc(v.pop('time'))
-                    e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : t.strftime('%Y-%m-%dT%H:%M:%S%z') } )
-                    e_value.text = v.pop('value')
-                    if len(v) != 0:
-                        self.emsg = 'there is something unknown json key in the value spec. (%s)' % v
-                        return None
+            for vs in j_vslist:
+                t = vs.get('time')
+                v = vs.get('value')
+                if t == None or v == None:
+                    print 'ERROR: time or value are not specified. [%s]' % vs
+                    self.emsg = 'time or value are not specified. [%s]' % v
+                    return None
+                dt = getutc(t)
+                e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : dt.strftime('%Y-%m-%dT%H:%M:%S%z') } )
+                e_value.text = v
         return e_newroot
 
     #
@@ -467,8 +460,8 @@ class fiapProto():
             _FIAP_METHOD_QUERYRS : [ self._XMLtoJSON_QueryRS, [ 'header', 'body' ] ] }
         r = self._parseXML(e_root, handler)
         if r != None:
-            r['fiap'] = _FIAPY_FIAP_VERSION
-            return json.dumps(r)
+            r['version'] = _FIAPY_FIAP_VERSION
+            return json.dumps( { 'fiap' : r } )
         else:
             return None
 
@@ -500,8 +493,11 @@ class fiapProto():
     #
     # translate Query Object into JSON
     #
+    # @return j_query a query request spec in JSON
+    # @return TBD XXX in error
+    #
     def _XMLtoJSON_QueryObject(self, e_query):
-        j_query = {} 
+        j_query = {}
         for k in [ 'uuid', 'type', 'acceptableSize', 'cursor', 'ttl', 'callbackData', 'callbackConrol' ]:
             v = e_query.get(k)
             if v != None:
@@ -509,15 +505,17 @@ class fiapProto():
         #
         # translate Key Objects into JSON
         #
+        j_query['key'] = []
         for e_key in e_query.iterfind('./fiap:key', namespaces=_NSMAP):
-            key_list = []
-            key = {}
-            for k in [ 'id', 'attrName', 'eq', 'ne', 'lt', 'gt', 'lteq', 'gteq', 'select', 'trap' ]:
-                v = e_key.get(k)
+            pid = e_key.get('id')
+            if pid == None:
+                return None
+            keys = {}
+            for i in [ 'attrName', 'eq', 'ne', 'lt', 'gt', 'lteq', 'gteq', 'select', 'trap' ]:
+                v = e_key.get(i)
                 if v != None:
-                    key[k] = v
-            key_list.append(key)
-        j_query["key"] = key_list
+                    keys[i] = v
+            j_query['key'].append({ pid: keys })
         return j_query
 
     #
@@ -544,7 +542,7 @@ class fiapProto():
         pset_all = self._parseXMLPointClass(e_root)
         if len(pset_all) == 0:
             self.emsg = 'There is no matched point for the query.'
-            self._setJsonResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_NOT_FOUND, self.emsg)
+            self._setJSONResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_NOT_FOUND, self.emsg)
             return self.doc
         self.doc = { _FIAP_METHOD_QUERYRS : { "response" : "OK", "query" : j_query, "point" : self._getJSONPointSpec(pset_all) } }
         return self.doc
@@ -619,17 +617,19 @@ class fiapProto():
     # output: pspec_list in dict of FIAP JSON
     #
     def _getJSONPointSpec(self, pset):
-        pspec_list = []
-        pspec = {}
-        current = None
-        for i in pset:
-            if current != i['pid']:
-                current = i['pid']
-                pspec[current] = []
-                pspec_list.append(pspec[current])
-            tstr = datetime.isoformat(i['time'].astimezone(pytz.timezone(self.timezone)))
-            pspec[current].append({'time':tstr, 'value':i['value']})
-        return pspec_list
+        j_point = {}
+        for p in pset:
+            pid = p.get('pid')
+            t = p.get('time')
+            v = p.get('value')
+            if pid == None or t == None or v == None:
+                print 'ERROR: pid, t or v are not specified.'
+                return None
+            if j_point.get(pid) == None:
+                j_point[pid] = []
+            tstr = datetime.isoformat(t.astimezone(pytz.timezone(self.timezone)))
+            j_point[pid].append({'time':tstr, 'value':v})
+        return j_point
 
     #
     # parse XML and process it, then response in XML.
@@ -681,7 +681,7 @@ class fiapProto():
                 e_any[i] = e_root.find(basepath % (mname, i), namespaces=_NSMAP)
                 if e_any[i] == None:
                     self.emsg = 'neither transport nor header is specified. [%s]' % tostring(e_root)
-                    return None
+                    #return None
             method = clist[0]
         if method == None:
             self.emsg = 'FIAP method is not specified.'
@@ -728,10 +728,10 @@ class fiapProto():
     # parse XML FETCH protocol
     #
     def _serverParseXML_FETCH(self, e_root, e_query):
-        k_limit = self._getQueryAcceptableSize(e_query.get('acceptableSize'))
+        k_limit = self._getQueryAcceptableSize(e_query)
         k_skip = self._getQueryCursor(e_query.get('cursor'))
         iter_keys = e_query.iterfind('./fiap:key', namespaces=_NSMAP)
-        keys = self._getKeyList(iter_keys)
+        keys = self._getKey_XMLList(iter_keys)
         if keys == None:
             return None
         #
@@ -745,12 +745,12 @@ class fiapProto():
         #
         # fetch
         #
-        total = 0
         try:
             m = fiapMongo.fiapMongo(**_FIAPY_MONGODB)
             #
             # get points.
             #
+            total = 0
             for k in keys:
                 try:
                     cursor = m.iterPoint(k, k_limit, k_skip)
@@ -770,9 +770,10 @@ class fiapProto():
                     if k['next'] != 0:
                         k['query'].set('cursor', str(k['next']))
                     e_rquery.append(k['query'])
-            total += k['result']
+                total += k['result']
             if self.debug > 0:
-                print 'DEBUG: search key =', k
+                for k in keys:
+                    print 'DEBUG: search key =', k
         except fiapMongo.fiapMongoException as et:
             self.emsg = 'An error occured when it accesses to the DB. (%s)' % et
             self._getErrorObject(e_header, 'error', self.emsg)
@@ -792,7 +793,7 @@ class fiapProto():
     def _serverParseXML_TRAP(self, e_root, e_query):
         f_remove = False
         req = {}
-        req['limit'] = self._getQueryAcceptableSize(e_query.get('acceptableSize'))
+        req['limit'] = self._getQueryAcceptableSize(e_query)
         ttl = self._getQueryTTL(e_query.get('ttl'))
         if ttl == 0:
             req['tte'] = 0
@@ -801,7 +802,7 @@ class fiapProto():
             dt.astimezone(pytz.timezone('UTC'))
             req['tte'] = dt
         iter_keys = e_query.iterfind('./fiap:key', namespaces=_NSMAP)
-        req['qk'] = self._getKeyList(iter_keys)
+        req['qk'] = self._getKey_XMLList(iter_keys)
         if req['qk'] == None:
             return None
         #
@@ -848,27 +849,24 @@ class fiapProto():
     # input: the value of acceptableSize
     # output: value or _FIAPY_MAX_ACCEPTABLESIZE
     #
-    def _getQueryAcceptableSize(self, v_limit):
+    def _getQueryAcceptableSize(self, j_query):
         #
-        # make it sure the limit is a number.
+        # eake it nure the limit is a number.
         #
-        try:
-            v_limit = int(v_limit)
-        except Exception as et:
-            print_exception(et)
-            print 'DEBUG: acceptableSize is not a number.  set %d for the limit' % _FIAPY_MAX_ACCEPTABLESIZE
-            return _FIAPY_MAX_ACCEPTABLESIZE      
-        k_limit = _FIAPY_MAX_ACCEPTABLESIZE
+        v_limit = j_query.get('acceptableSize')
         if v_limit == None:
             if self.debug > 0:
-                print 'DEBUG: acceptableSize is not specified.  set %d for the limit' % _FIAPY_MAX_ACCEPTABLESIZE
-            return _FIAPY_MAX_ACCEPTABLESIZE
-        elif v_limit == 0:
-            self.emsg = 'acceptableSize must not be zero.'
+                print 'DEBUG: no acceptableSize is specified. set %d' % _FIAPY_MAX_ACCEPTABLESIZE
+            return _FIAPY_MAX_ACCEPTABLESIZE      
+        elif isinstance(v_limit, str) == False:
+            print 'ERROR: acceptableSize is not a number. ignored and set %d' % _FIAPY_MAX_ACCEPTABLESIZE
+            return _FIAPY_MAX_ACCEPTABLESIZE      
+        v_limit = int(v_limit)
+        if v_limit == 0:
+            print 'ERROR: acceptableSize must not be zero. ignored and set %d' % _FIAPY_MAX_ACCEPTABLESIZE
             return _FIAPY_MAX_ACCEPTABLESIZE
         elif v_limit > _FIAPY_MAX_ACCEPTABLESIZE:
-            print _FIAPY_MAX_ACCEPTABLESIZE, v_limit
-            self.emsg = 'acceptableSize must be less than %d, but is too big, %d' % (_FIAPY_MAX_ACCEPTABLESIZE, v_limit)
+            print 'ERROR: acceptableSize must be less or equal to %d, but %d. ignored.' % (_FIAPY_MAX_ACCEPTABLESIZE, v_limit)
             return _FIAPY_MAX_ACCEPTABLESIZE
         return v_limit
 
@@ -989,13 +987,80 @@ class fiapProto():
         return doc
 
     #
+    # @param key_spec an iterator of JSON dict objects including keys.
+    #        e.g. etree.keys or json keys.
+    #
+    # @return None no keys. the error message set in self.emsg
+    # @return a list object specifying the query object..
+    #         [ { 'pid': pid, 'an': attrName, 'op': select,
+    #             'cond': { '$where' : 'condition' }, 'trap': True }, ... ]
+    #
+    def _getKey_JSONList(self, j_key_list):
+        if j_key_list == None:
+            self.emsg = 'there seems no key in the Query'
+            return None
+        keys = []
+        for key_spec in j_key_list:
+            for pid, vals in key_spec.iteritems():
+                key = { 'query' : vals }
+                #
+                # check id.
+                #
+                if pid == None:
+                    self.emsg = 'id attribute is not specified. [%s]' % self._tostring(vals)
+                    return None
+                key['pid'] = pid
+                #
+                # check 'attrName' and make the condition.
+                # ignore other conditions if 'eq' is specified.
+                #
+                an = vals.get('attrName')
+                if an == None:
+                    self.emsg = 'an attribute is not specified.' % self._tostring(vals)
+                    return None
+                key['an'] = an
+                #
+                # create 'cond'
+                #
+                if an == 'time':
+                    key['cond'] = self.getKeyCond(vals, fiapMongo.getKeyCondTime)
+                elif an == 'value':
+                    key['cond'] = self.getKeyCond(vals, fiapMongo.getKeyCondValue)
+                else:
+                    self.emsg = 'invalid attrName is specified. [%s]' % self._tostring(vals)
+                    return None
+                #
+                # check 'select'
+                #
+                op = vals.get('select')
+                if op == 'maximum':
+                    key['op'] = 'max'
+                elif op == 'minimum':
+                    key['op'] = 'min'
+                elif op != None:
+                    self.emsg = 'unkown value in select is specified. [%s]' % op
+                    return None
+                #
+                # trap
+                #
+                key['trap'] = False
+                a = vals.get('trap')  # for event detection {changed}
+                if a == 'changed':
+                    key['trap'] = True
+                elif a != None:
+                    self.emsg = 'unkown value of select is specified. [%s]' % self._tostring(vals)
+                    return None
+                keys.append( key )
+        return keys
+
+    #
     # input: a list or an iterator of dict objects including keys.
     #        e.g. etree.keys or json keys.
     # output: a list object specifying the query object..
     #         [ { 'pid': pid, 'an': attrName, 'op': select,
     #             'cond': { '$where' : 'condition' }, 'trap': True }, ... ]
     #
-    def _getKeyList(self, iter_keys):
+    def _getKey_XMLList(self, iter_keys):
         if iter_keys == None:
             self.emsg = 'there seems no key in the Query'
             return None
@@ -1010,7 +1075,6 @@ class fiapProto():
                 self.emsg = 'id attribute is not specified. [%s]' % self._tostring(e_key)
                 return None
             key['pid'] = pid
-
             #
             # check attrName.
             # XXX should it check the value of attrName ? e.g. either 'time' or 'value' is valid.
@@ -1020,7 +1084,6 @@ class fiapProto():
                 self.emsg = 'a attribute is not specified.' % self._tostring(e_key)
                 return None
             key['an'] = a
-
             #
             # check 'select'
             #
@@ -1033,7 +1096,6 @@ class fiapProto():
             elif a != None:
                 self.emsg = 'unkown value of select is specified. [%s]' % a
                 return None
-
             #
             # make a condition.
             # ignore other conditions if 'eq' is specified.
@@ -1046,7 +1108,6 @@ class fiapProto():
                 self.emsg = 'invalid attrName is specified. [%s]' % self._tostring(e_key)
                 return None
             key['cond'] = self.getKeyCond(e_key, conv_method)
-
             #
             # trap
             #
@@ -1057,9 +1118,7 @@ class fiapProto():
             elif a != None:
                 self.emsg = 'unkown value of select is specified. [%s]' % self._tostring(e_key)
                 return None
-
             keys.append( key )
-
         return keys
 
     #
@@ -1098,7 +1157,7 @@ class fiapProto():
 
     #
     # input: a dict object such as a Point Element.
-    # output: a dict object specifying the point.
+    # @return pset a dict object specifying the point.
     #         {'pid':pid, 'time':utc, 'value':v}
     #
     #   time is converted into UTC.

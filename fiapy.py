@@ -97,7 +97,7 @@ def run(port):
 #
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument('-p', action='store', dest='port', default=8881,
+    p.add_argument('-p', action='store', dest='port', default=18880,
         help='specify the port number for this server.')
     p.add_argument('-d', action='store', dest='debug', default=0,
         help='specify the debug level.')
