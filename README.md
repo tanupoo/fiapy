@@ -101,7 +101,8 @@ you have to specify the port number when you launch fiapy.py.
 
 ## IEEE1888.3 security
 
-See HOWTO-cert.md to create certificates for the IEEE1888 component.
+See [HOWTO-cert.md](https://github.com/tanupoo/fiapy/blob/master/HOWTO-cert.md)
+to create certificates for the IEEE1888 component.
 
 ## Timezone
 
@@ -117,7 +118,7 @@ fiapy deals with it as UTC timezone.
 
 ## JSON format
 
-see JSON-data-model.md
+see [JSON-data-model.md](https://github.com/tanupoo/fiapy/blob/master/JSON-data-model.md)
 
 ## Tips
 
