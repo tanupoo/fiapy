@@ -84,6 +84,7 @@ you have to specify the port number when you launch fiapy.py.
 ## TODO
 
 - implement TRAP protocol, trapy.
+- implement GET method.
 - consider the error message when the translation error happens.
 - consider the error message when the method hasn't been identified.
 
