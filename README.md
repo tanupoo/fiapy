@@ -22,8 +22,18 @@ To run it, you can simply type like below:
     % fiapy.py
     ~~~~
 
-the default port number is 18880.
-if you want to see the debug message, you add "-d 99" as the parameter.
+The default port number is 18880.
+If you want to see the debug message, you add "-d 99" as the parameter.
+
+If you want to use the IEEE1888.3 security, you simply add "-s" option.
+
+    ~~~~
+    % fiapy.py -s
+    ~~~~
+
+The default port number is 18883.
+
+It's not allowed to use both secure and non-secure mode in same time.
 
 ### fiapClient.py
 
@@ -35,7 +45,7 @@ If you provide a file in XML format, it automatically translates into JSON.
 For example, to send a FETCH request in JSON,
 
 ~~~~
-% fiapClient.py -s fiap.server.example.org -c test-fetch-01.json
+% fiapClient.py -e http://fiap.example.org/storage -c test-fetch-01.json
 ~~~~
 
 If you want to send a request in XML, you have to add "-x" option into the parameter.
@@ -64,16 +74,17 @@ dateutil, pytz and pymongo are probably needed to be intalled.
     bson
     dateutil
     hmac
-    httplib
+    httplib2
     json
     mimetools
     pymongo
     pytz
     rfc822
-    urllib
     urlparse
     uuid
     ~~~~
+
+    **TO BE CHECKED**: it probably includes the modules for urllib.
 
 ### mongodb
 
