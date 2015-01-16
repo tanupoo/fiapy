@@ -6,19 +6,15 @@ for the IEEE1888 server/client.
 The text includes how to create a certificate signing request (CSR)
 and to sign it by CA.
 
-## todo
-
-- check the cipher algorithms whether it's suitable for a level of security.
-
 ## component's certificate generation
 
-Note that the certificates created in this section
-could be used to create a TLS session.
+This section describes the way to generate **a self-signed certificate**.
+The certificates created in this section could be used to create a TLS session.
 However, the issuer in the certificate is identical to the subject name.
 It means that no one guarantee the public key in the certificate.
-If you don't trust the peer directly,
-you have to create a certificate signed by a trust point (e.g. CA).
-See next setion.
+If you don't trust the peer directly, you don't use such certificates.
+You have to create a certificate signed by a trust point (e.g. CA).
+Skip this section for that.
 
 - create a configuration file of openssl.
 
@@ -84,26 +80,11 @@ this is a request for the component comp002.test.gutp.jp which is a GW.
 
 generate the request for comp002 as well.
 
-## component's certificate request generation
+## Prerequisite: CA's certificate and private key generation
 
-in order to create CSR by the openssl command,
-you have to create the configuration file for each component.
-creation comp001-req.conf and comp002-req.conf,
-please refer to the previous section.
-
-after getting the configuration files, you have to create CSR.
-
-~~~~
-    % openssl req -new -nodes -days 730 -newkey rsa:2048 -keyout comp001-req.pem -out comp001-req.pem -config comp001-req.conf
-~~~~
-
-generate a request for comp002 as well.
-
-~~~~
-    % openssl req -new -nodes -days 730 -newkey rsa:2048 -keyout comp002-req.pem -out comp002-req.pem -config comp002-req.conf
-~~~~
-
-## CA's certificate and privatekey generation
+To sign a client's or server's certificate,
+you need to setup the certificate and the private key of your authority.
+It's typically called CA.
 
 generate the password to handle the CA's private key.
 
@@ -173,6 +154,26 @@ see testCA-privkey.pem.  it's encoded by PEM format.
     xO8f6EC5uQLJSGSczKKfQfFkLhP0zIJhKGAfmposX+YftCjGVeUR069IJkg4Jdw2
     ArHs4nA9xCl/K/DOj7QEko5jC2ACAy9PDppHWWd8M0RmT5DvRn6FpppR736/w+dU
     -----END RSA PRIVATE KEY-----
+~~~~
+
+## component's certificate request generation
+
+in order to create CSR by the openssl command,
+you have to create the configuration file for each component.
+creation comp001-req.conf and comp002-req.conf,
+please refer to the previous section.
+
+After getting the configuration files, you have to create CSR,
+generate the comp001's private key and CSR.
+
+~~~~
+    % openssl req -new -nodes -days 730 -newkey rsa:2048 -keyout comp001-privkey.pem -out comp001-req.pem -config comp001-req.conf
+~~~~
+
+generate the comp002's private key and CSR as well.
+
+~~~~
+    % openssl req -new -nodes -days 730 -newkey rsa:2048 -keyout comp002-privkey.pem -out comp002-req.pem -config comp002-req.conf
 ~~~~
 
 ## signing a CSR and generating a signed certificate.
@@ -264,15 +265,25 @@ sign the request of comp002 as well.
 
 ### another way to create a request with subjectAltName and sign it by CA.
 
+you can pass a string defined by an environment variable into the openssl.conf.
+for example, the openssl.conf has a line like below:
+
 ~~~~
-    ALTNAME="DNS:hoge.jp,email:admin@fiap.gutp.jp" \
+    subjectAltName = $ENV::SAN
+~~~~
+
+and, then use the following command.
+
+~~~~
+    SAN="DNS:hoge.jp,email:admin@fiap.gutp.jp" \
     openssl req -new -newkey rsa:2048 \
         -keyout privkey.pem -passout pass:pwd.txt -out new-req.pem \
         -config openssl.conf -subj '/C=JP/ST=Tokyo/L=Hongo/CN=gw1.gutp.jp'
 
-    ALTNAME="DNS:hoge.jp,email:admin@fiap.gutp.jp" \
+    SAN="DNS:hoge.jp,email:admin@fiap.gutp.jp" \
     openssl x509 -req -CA testCA-cert.pem -passin file:testCA.pwd \
         -set_serial 1 -in new-req.pem -out new-cert.pem \
         -extfile openssl.conf -extensions v3_req
 ~~~~
 
+See http://cmrg.fifthhorseman.net/wiki/SubjectAltName
