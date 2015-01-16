@@ -6,6 +6,8 @@ fiapy
 [IEEE1888](http://standards.ieee.org/findstds/standard/1888-2014.html) is a set of protocol to exchange amount of time series data between two nodes.
 
 This is an IEEE1888 implementation written in python.
+IEEE1888.3 security is almost implemented.
+checking the peer's subjectAltName has not been done yet.
 WRITE and FETCH protocols for both client and server are supported.
 TRAP protocol is under developing.
 REGISTER and LOOKUP are not supported.
@@ -81,12 +83,15 @@ you have to specify the port number when you launch fiapy.py.
 
 ## TODO
 
-- IEEE1888.3
 - implement TRAP protocol, trapy.
 - consider the error message when the translation error happens.
 - consider the error message when the method hasn't been identified.
 
-### Timezone
+## IEEE1888.3 security
+
+See HOWTO-cert.md to create certificates for the IEEE1888 component.
+
+## Timezone
 
 The timezone of data in the database is UTC.
 If an offset of the datetime string in the point element is specified,
