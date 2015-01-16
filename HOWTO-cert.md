@@ -28,6 +28,7 @@ belonging to test.gutp.jp.
     distinguished_name = req_distinguished_name
     x509_extensions = v3_req
     prompt = no
+
     [req_distinguished_name]
     C = JP
     ST = Tokyo
@@ -35,13 +36,16 @@ belonging to test.gutp.jp.
     O = GUTP
     OU = OPWG
     CN = comp001.test.gutp.jp
+
     [v3_req]
-    keyUsage = keyEncipherment, dataEncipherment
+    keyUsage = keyEncipherment, digitalSignature, keyAgreement
     extendedKeyUsage = serverAuth, clientAuth
     subjectAltName = @alt_names
+
     [alt_names]
-    DNS.1 = app001.hongo.test.gutp.jp
-    DNS.2 = storage001.hongo.test.gutp.jp
+    DNS.1 = comp001.test.gutp.jp
+    DNS.2 = app001.hongo.test.gutp.jp
+    DNS.3 = storage001.hongo.test.gutp.jp
 ~~~~
 
 this is a request for the component comp002.test.gutp.jp which is a GW.
@@ -52,6 +56,7 @@ this is a request for the component comp002.test.gutp.jp which is a GW.
     distinguished_name = req_distinguished_name
     x509_extensions = v3_req
     prompt = no
+
     [req_distinguished_name]
     C = JP
     ST = Tokyo
@@ -59,18 +64,22 @@ this is a request for the component comp002.test.gutp.jp which is a GW.
     O = GUTP
     OU = OPWG
     CN = comp002.test.gutp.jp
+
     [v3_req]
-    keyUsage = keyEncipherment, dataEncipherment
+    keyUsage = keyEncipherment, digitalSignature, keyAgreement
     extendedKeyUsage = serverAuth, clientAuth
     subjectAltName = @alt_names
+
     [alt_names]
-    DNS.1 = gw001.hongo.test.gutp.jp
+    DNS.1 = comp002.test.gutp.jp
+    DNS.2 = gw001.hongo.test.gutp.jp
 ~~~~
 
 - generate a certificate request.
 
 ~~~~
-    % openssl req -x509 -nodes -days 730 -newkey rsa:2048 -keyout comp001-cert.pem -out comp001-cert.pem -config comp001-req.conf
+    % openssl req -x509 -nodes -days 730 -newkey rsa:2048 \
+        -keyout comp001-cert.pem -out comp001-cert.pem -config comp001-req.conf
     Generating a 2048 bit RSA private key
     ........................................................................+++
     ........................................................................+++
@@ -104,7 +113,8 @@ see testCA-pwd.txt if your password has been stored.
 generate the CA's private key.
 
 ~~~~
-    % openssl genrsa -aes128 -out testCA-privkey.pem -passout file:testCA-pwd.txt 2048
+    % openssl genrsa -aes128 \
+        -out testCA-privkey.pem -passout file:testCA-pwd.txt 2048
     Generating RSA private key, 2048 bit long modulus
     ...........+++
     ....................................................................................................................+++
@@ -167,19 +177,23 @@ After getting the configuration files, you have to create CSR,
 generate the comp001's private key and CSR.
 
 ~~~~
-    % openssl req -new -nodes -days 730 -newkey rsa:2048 -keyout comp001-privkey.pem -out comp001-req.pem -config comp001-req.conf
+    % openssl req -new -nodes -days 730 -newkey rsa:2048 \
+        -keyout comp001-privkey.pem -out comp001-req.pem \
+        -config comp001-req.conf
 ~~~~
 
 generate the comp002's private key and CSR as well.
 
 ~~~~
-    % openssl req -new -nodes -days 730 -newkey rsa:2048 -keyout comp002-privkey.pem -out comp002-req.pem -config comp002-req.conf
+    % openssl req -new -nodes -days 730 -newkey rsa:2048 \
+        -keyout comp002-privkey.pem -out comp002-req.pem \
+        -config comp002-req.conf
 ~~~~
 
 ## signing a CSR and generating a signed certificate.
 
 ~~~~
-    openssl x509 -req \
+    % openssl x509 -req \
         -CA testCA-cert.pem -CAkey testCA-privkey.pem \
         -passin file:testCA-pwd.txt \
         -set_serial 1 -in comp001-req.pem -out comp001-signedcert.pem \
@@ -197,63 +211,41 @@ subject alternative names exist.
             Version: 3 (0x2)
             Serial Number: 1 (0x1)
             Signature Algorithm: sha1WithRSAEncryption
-            Issuer: C=JP, ST=Tokyo, L=Hongo, CN=ca.test.gutp.jp
+            Issuer: C=JP, ST=Tokyo, L=Hongo, CN=testca.gutp.jp
             Validity
-                Not Before: Jan 15 23:44:53 2015 GMT
-                Not After : Feb 14 23:44:53 2015 GMT
+                Not Before: Jan 16 15:31:49 2015 GMT
+                Not After : Feb 15 15:31:49 2015 GMT
             Subject: C=JP, ST=Tokyo, L=Hongo, O=GUTP, OU=OPWG, CN=comp001.test.gutp.jp
             Subject Public Key Info:
                 Public Key Algorithm: rsaEncryption
                 RSA Public Key: (2048 bit)
                     Modulus (2048 bit):
-                        00:bf:65:91:52:56:74:46:30:60:15:c7:0b:d9:e7:
-                        1a:fc:bc:b6:3a:61:08:23:fe:b6:11:18:a9:f0:72:
-                        f0:e4:77:a4:c9:a2:b5:1f:39:29:a0:9d:8a:87:17:
-                        0f:e7:b2:6a:ea:77:b8:40:8d:a4:6a:40:bb:47:93:
-                        30:50:a4:74:8d:f7:93:5e:99:88:7c:29:0f:1a:34:
-                        5d:dd:3b:73:19:ad:88:2a:eb:9c:30:cf:f8:71:04:
-                        7b:b2:bd:3e:b8:a1:0a:6c:1b:a3:00:10:85:32:27:
-                        8e:47:f1:d9:b7:0d:ef:30:98:c5:af:1b:23:dc:a2:
-                        65:4a:53:03:69:68:dd:ef:83:9f:0a:f5:c4:8b:24:
-                        8c:ab:1c:8b:2e:2c:db:32:9d:fa:14:62:11:24:ec:
-                        8b:0d:1b:05:4d:28:6a:11:e0:10:82:df:2c:1a:e8:
-                        f9:16:1f:9d:c8:8f:bb:9c:af:eb:36:12:6c:da:af:
-                        5e:f7:55:1c:4f:ff:9c:32:89:84:7d:13:77:bc:89:
-                        f0:89:4c:e1:49:16:77:42:d3:e6:a7:86:e0:20:26:
-                        31:ab:c9:70:d9:b7:3a:8f:17:66:68:24:f1:3f:3d:
-                        38:68:5e:07:77:17:11:77:a2:96:75:b4:38:2b:63:
-                        03:8b:ec:e6:b8:41:ca:90:10:ad:db:70:4b:ee:e5:
-                        3d:9f
+                        00:d8:c6:7a:ef:81:8d:17:79:15:a0:4f:06:d2:dd:
+                        e3:3c:80:1b:d2:46:f5:59:38:e0:f3:b0:29:d9:f7:
+                                : (snip)
+                        82:33:42:b3:ef:1c:56:ff:20:de:57:e6:9f:b0:ea:
+                        18:3f:77:01:9e:76:06:16:c9:b2:d6:83:f7:26:ce:
+                        0b:1d
                     Exponent: 65537 (0x10001)
             X509v3 extensions:
                 X509v3 Key Usage: 
-                    Key Encipherment, Data Encipherment
+                    Digital Signature, Key Encipherment, Key Agreement
                 X509v3 Extended Key Usage: 
                     TLS Web Server Authentication, TLS Web Client Authentication
                 X509v3 Subject Alternative Name: 
-                    DNS:app001.hongo.test.gutp.jp, DNS:storage001.hongo.test.gutp.jp
+                    DNS:comp001.test.gutp.jp, DNS:app001.hongo.test.gutp.jp, DNS:storage001.hongo.test.gutp.jp
         Signature Algorithm: sha1WithRSAEncryption
-            44:72:95:05:e4:13:2f:0d:3f:b8:46:9f:09:46:1f:c4:00:07:
-            75:49:c3:0b:63:00:c1:9c:1d:7d:45:1a:5a:f3:5c:39:58:e8:
-            f6:b8:57:e5:a1:94:82:95:fe:f0:0b:37:c3:02:50:75:b1:85:
-            1f:41:50:61:aa:67:1b:3a:d9:ee:4b:8b:c2:e7:83:7c:d0:c8:
-            bd:d5:4b:0b:c2:6f:ef:a1:ae:9d:3b:75:7c:c5:f7:7d:d8:06:
-            b0:49:47:60:81:9f:3b:7a:c5:7c:fc:ff:c3:00:29:d3:5d:c7:
-            a3:6b:1b:df:16:5a:77:24:c2:97:89:21:a1:d6:b3:b2:2b:dd:
-            d2:c4:5d:b9:e2:88:f1:6c:ba:ff:df:4f:72:42:5b:56:ff:a5:
-            ea:74:5d:37:45:b9:22:33:f2:d8:e6:ed:69:ca:46:84:33:4c:
-            6a:a5:0a:be:1c:4e:36:f2:2c:46:ef:6a:f8:c3:ed:5f:2d:f5:
-            ba:28:d7:63:63:05:8f:a3:7c:20:7b:70:4d:b2:81:7e:35:c7:
-            be:08:46:5f:74:6f:a4:d4:89:c2:98:b7:ca:f8:07:ae:50:22:
-            ee:73:92:b5:4f:8c:ff:48:ed:48:30:05:cb:93:da:fa:79:bb:
-            3f:46:0f:f2:5c:de:b9:13:0b:bb:61:65:b3:7c:56:6f:54:59:
-            04:58:df:ed
+            22:f2:5c:b8:e3:c8:2a:b1:21:76:7d:c9:18:b4:5c:2d:7c:e1:
+            1a:b3:69:17:21:58:eb:44:b9:6f:fb:ea:b1:52:2a:8a:a8:e1:
+                                : (snip)
+            32:6d:dc:19:02:a2:30:3c:d0:49:40:da:69:fa:15:63:be:d9:
+            40:0c:95:5f
 ~~~~
 
 sign the request of comp002 as well.
 
 ~~~~
-    openssl x509 -req \
+    % openssl x509 -req \
         -CA testCA-cert.pem -CAkey testCA-privkey.pem \
         -passin file:testCA-pwd.txt \
         -set_serial 1 -in comp002-req.pem -out comp002-signedcert.pem \
@@ -262,6 +254,27 @@ sign the request of comp002 as well.
 
 ----
 ## TIPS
+
+### KeyUsage extensions
+
+If you see the follow error during the TLS negotiation,
+you can check the key usage extensions in your certificate.
+
+~~~~
+[SSL: SSLV3_ALERT_UNSUPPORTED_CERTIFICATE] sslv3 alert unsupported certificate (_ssl.c:581)
+~~~~
+
+According to the discussion about
+[Extensions for SSL server certificate](http://security.stackexchange.com/questions/26647/extensions-for-ssl-server-certificate/26650#26650),
+three entries in the key usage are required.
+
+~~~~
+keyUsage = keyEncipherment, digitalSignature, keyAgreement
+~~~~
+
+For more information:
+- About openssl key usage: [X509 V3 certificate extension configuration format](https://www.openssl.org/docs/apps/x509v3_config.html)
+- [Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile](http://tools.ietf.org/html/rfc5280)
 
 ### another way to create a request with subjectAltName and sign it by CA.
 
