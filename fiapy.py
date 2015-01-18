@@ -12,6 +12,21 @@ debug = 0
 
 class fiapHandler(BaseHTTPRequestHandler):
 
+    def __init__(self, request, client_address, server):
+        BaseHTTPRequestHandler.__init__(self, request, client_address, server)
+        #
+        # XXX
+        # which one should be used here, self.connection or self.request ?
+        #
+        client_cert = self.request.getpeercert()
+        if debug > 2:
+            print 'DEBUG: client_cert=', client_cert
+        if not client_cert:
+            raise CertificateValidationError(repr(server_cert))
+        if debug > 0:
+            for i in client_cert['subjectAltName']:
+                print 'DEBUG: SAN=', i
+
     def _log_initmsg(self):
         if self.headers.has_key('Content-Type') == True:
             self.ctype = self.headers['Content-Type']
@@ -124,6 +139,8 @@ def parse_args():
     p.add_argument('-p', action='store', dest='port', default=None,
         help='specify the port number for this server.')
     p.add_argument('-s', action='store_true', dest='secure', default=False,
+        help='specify to use TLS connection.')
+    p.add_argument('-c', action='store', dest='secure', default=False,
         help='specify to use TLS connection.')
     p.add_argument('-d', action='store', dest='debug', default=0,
         help='specify the debug level.')
