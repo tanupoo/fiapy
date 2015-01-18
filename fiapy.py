@@ -6,6 +6,7 @@ from SocketServer import ThreadingMixIn
 import threading
 import fiapProto
 import argparse
+import ssl
 
 debug = 0
 
@@ -78,6 +79,29 @@ class fiapHandler(BaseHTTPRequestHandler):
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     pass
 
+def runs(port):
+    server = None
+    try:
+        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+        context.load_cert_chain(
+                certfile='cert/comp001-signedcert.pem',
+                keyfile='cert/comp001-privkey.pem')
+        context.load_verify_locations(cafile='cert/testCA-cert.pem')
+        context.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
+        context.verify_mode = ssl.CERT_REQUIRED
+        #context.set_ciphers(ciphers)
+        server = ThreadedHTTPServer(('', int(port)), fiapHandler)
+        server.socket = context.wrap_socket(server.socket, server_side=True)
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print '^C received, shutting down the web server'
+    except Exception as e:
+        print 'ERROR: ', e.message, str(type(e))
+    finally:
+        print 'cleaning'
+        if server != None:
+            server.socket.close()
+
 def run(port):
     server = None
     try:
@@ -97,15 +121,30 @@ def run(port):
 #
 def parse_args():
     p = argparse.ArgumentParser()
-    p.add_argument('-p', action='store', dest='port', default=18880,
+    p.add_argument('-p', action='store', dest='port', default=None,
         help='specify the port number for this server.')
+    p.add_argument('-s', action='store_true', dest='secure', default=False,
+        help='specify to use TLS connection.')
     p.add_argument('-d', action='store', dest='debug', default=0,
         help='specify the debug level.')
-    return p.parse_args()
+    opt = p.parse_args()
+    return opt
 
 #
 # main
 #
 opt = parse_args()
 debug = opt.debug
-run(port=opt.port)
+#
+# set the runner and default port if needed.
+#
+if opt.secure == True:
+    opt.run = runs
+    if opt.port == None:
+        opt.port = 18883
+else:
+    opt.run = run
+    if opt.port == None:
+        opt.port = 18880
+
+opt.run(port=opt.port)

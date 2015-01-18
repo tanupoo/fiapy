@@ -850,18 +850,16 @@ class fiapProto():
     # output: value or _FIAPY_MAX_ACCEPTABLESIZE
     #
     def _getQueryAcceptableSize(self, j_query):
-        #
-        # eake it nure the limit is a number.
-        #
         v_limit = j_query.get('acceptableSize')
         if v_limit == None:
             if self.debug > 0:
                 print 'DEBUG: no acceptableSize is specified. set %d' % _FIAPY_MAX_ACCEPTABLESIZE
             return _FIAPY_MAX_ACCEPTABLESIZE      
-        elif isinstance(v_limit, str) == False:
+        try:
+            v_limit = int(v_limit)
+        except Exception as e:
             print 'ERROR: acceptableSize is not a number. ignored and set %d' % _FIAPY_MAX_ACCEPTABLESIZE
             return _FIAPY_MAX_ACCEPTABLESIZE      
-        v_limit = int(v_limit)
         if v_limit == 0:
             print 'ERROR: acceptableSize must not be zero. ignored and set %d' % _FIAPY_MAX_ACCEPTABLESIZE
             return _FIAPY_MAX_ACCEPTABLESIZE

@@ -3,7 +3,7 @@
 ts=`date +'%Y-%m-%dT%H:%M:%%02d%z'`
 
 exec_fiapy() {
-cat <<EOD | ./fiapClient.py -s localhost
+cat <<EOD | ./fiapClient.py -e http://localhost/
 {
   "fiap" : {
     "version" : "20140401",
