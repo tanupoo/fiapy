@@ -138,7 +138,7 @@ def parse_args():
     p.add_argument('-f', action='store', dest='bfile', default=None,
         help='specify the filename of the request.')
     p.add_argument('-c', action='store', dest='cfile', default=None,
-        help='specify the file name for the configuration including security.')
+        help='specify the file name of the configuration.')
     p.add_argument('-x', action='store_true', dest='req_to_xml', default=False,
         help='specify to send an XML request.')
     p.add_argument('-X', action='store_true', dest='res_to_xml', default=False,
