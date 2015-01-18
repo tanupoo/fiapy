@@ -1,0 +1,20 @@
+{
+    "security": {
+        "key_file": "cert/comp001-privkey.pem",
+        "cert_file": "cert/comp001-signedcert.pem",
+        "ca_certs": "cert/testCA-cert.pem",
+
+        "acl" : {
+            "gw001.hongo.test.gutp.jp": {
+                "accept": [ "*" ]
+            },
+            "app002.hongo.test.gutp.jp": {
+                "accept": [ "http://example.org/fiapy/test/p01" ],
+                "reject": [ "*" ]
+            },
+            "app003.hongo.test.gutp.jp": {
+                "rejct": [ "*" ]
+            }
+        }
+    }
+}
