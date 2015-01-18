@@ -6,8 +6,7 @@ fiapy
 [IEEE1888](http://standards.ieee.org/findstds/standard/1888-2014.html) is a set of protocol to exchange amount of time series data between two nodes.
 
 This is an IEEE1888 implementation written in python.
-IEEE1888.3 security is almost implemented.
-checking the peer's subjectAltName has not been done yet.
+A part of IEEE1888.3 security is supported.
 WRITE and FETCH protocols for both client and server are supported.
 TRAP protocol is under developing.
 REGISTER and LOOKUP are not supported.
@@ -38,18 +37,27 @@ It's not allowed to use both secure and non-secure mode in same time.
 ### fiapClient.py
 
 It's an IEEE1888 client implementation.
-It reads a request file from standard input or a file with -c option.
+It reads a request from the standard input or a file with -f option.
 By default, it send a request in JSON format and prints the result in JSON format.
 If you provide a file in XML format, it automatically translates into JSON.
 
 For example, to send a FETCH request in JSON,
 
 ~~~~
-% fiapClient.py -e http://fiap.example.org/storage -c test-fetch-01.json
+% fiapClient.py -e http://fiap.example.org/storage -f fetch.json
 ~~~~
 
 If you want to send a request in XML, you have to add "-x" option into the parameter.
-If you want to see the result in XML, you have to add "-X" option.
+If you want to see the result in XML, you have to add "-X" option as well.
+
+If you want to use the IEEE1888.3 security,
+you have to specify the https scheme
+and pass the security configuration to the command like below.
+
+~~~~
+% fiapClient.py -e https://fiap.example.org/storage -f fetch.json \
+    -c config.json
+~~~~
 
 ### trapy.py
 
@@ -103,6 +111,8 @@ you have to specify the port number when you launch fiapy.py.
 
 See [HOWTO-cert.md](https://github.com/tanupoo/fiapy/blob/master/HOWTO-cert.md)
 to create certificates for the IEEE1888 component.
+Checking the peer's subjectAltName has not been done yet.
+IEEE1888-level rejection has not been supported yet.
 
 ## Timezone
 
