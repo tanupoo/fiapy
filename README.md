@@ -10,7 +10,15 @@ A part of IEEE1888.3 security is supported.
 WRITE and FETCH protocols for both client and server are supported.
 TRAP protocol is under developing.
 REGISTER and LOOKUP are not supported.
-Experimentaly, JSON format and translation between XML and JSON are implemented.
+
+Experimentaly, it supports:
+
+- the JSON format.
+- translation between XML and JSON, vice varsa.
+- GET method.
+
+For more detail about this features,
+see [JSON-data-model.md](https://github.com/tanupoo/fiapy/blob/master/doc/JSON-data-model.md)
 
 ### fiapy.py
 
@@ -33,6 +41,12 @@ If you want to use the IEEE1888.3 security, you simply add "-s" option.
 The default port number is 18883.
 
 It's not allowed to use both secure and non-secure mode in same time.
+
+To get a latest value of the key, you can get it like below.
+
+    ~~~~
+    wget -t 1 -q -O - 'http://localhost:18880/?k=http://example.org/fiapy/test/p03&k=http://example.org/fiapy/test/p01'
+    ~~~~
 
 ### fiapClient.py
 
