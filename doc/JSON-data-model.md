@@ -337,11 +337,15 @@ RFC 2396 format should be used.
 
 - fetch
 
-http://server.example.org/?k=igem://example.org/test/temperature&k=igem://example.org/test/humidity
+~~~~
+GET http://server.example.org/?k=igem://example.org/test/temperature&k=igem://example.org/test/humidity
+~~~~
 
 - write
 
-http://server.example.org/?k=igem://example.org/test/temperature&v="26.5"&t=2014-11-21T07:55:00+0900
+~~~~
+GET http://server.example.org/?k=igem://example.org/test/temperature&v="26.5"&t=2014-11-21T07:55:00+0900
+~~~~
 
 ## method
 
