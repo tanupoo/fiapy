@@ -135,6 +135,16 @@ fiapy deals with it as UTC timezone.
 
 see [JSON-data-model.md](https://github.com/tanupoo/fiapy/blob/master/doc/JSON-data-model.md)
 
+## sample
+
+    ~~~~
+    python fiapc.py -d 99 -e http://localhost/ -f sample/test-fetch-01.json -c sample/comp003-config.json
+    ~~~~
+
+    ~~~~
+    python sample-interface-stat.py | ./fiapc.py -e http://localhost
+    ~~~~
+
 ## Tips
 
 ### How to send a IEEE1888 POST request simply.
