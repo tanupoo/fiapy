@@ -114,6 +114,11 @@ to create certificates for the IEEE1888 component.
 Checking the peer's subjectAltName has not been done yet.
 IEEE1888-level rejection has not been supported yet.
 
+### current specification
+
+- It always sends the certificate request.
+- It doesn't hand the CA directory.
+
 ## Timezone
 
 The timezone of data in the database is UTC.

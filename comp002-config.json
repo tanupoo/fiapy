@@ -2,6 +2,8 @@
     "security" : {
         "key_file" : "cert/comp002-privkey.pem",
         "cert_file" : "cert/comp002-signedcert.pem",
-        "ca_certs" : "cert/testCA-cert.pem"
+        "ca_certs" : "cert/testCA-cert.pem",
+
+        "ciphers" : "HIGH"
     }
 }

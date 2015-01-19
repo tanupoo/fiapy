@@ -4,28 +4,17 @@
 from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
 from SocketServer import ThreadingMixIn
 import threading
-import fiapProto
 import argparse
 import ssl
+import fiapProto
+import fiapConfig
 
-debug = 0
+cf = None
 
 class fiapHandler(BaseHTTPRequestHandler):
 
     def __init__(self, request, client_address, server):
         BaseHTTPRequestHandler.__init__(self, request, client_address, server)
-        #
-        # XXX
-        # which one should be used here, self.connection or self.request ?
-        #
-        client_cert = self.request.getpeercert()
-        if debug > 2:
-            print 'DEBUG: client_cert=', client_cert
-        if not client_cert:
-            raise CertificateValidationError(repr(server_cert))
-        if debug > 0:
-            for i in client_cert['subjectAltName']:
-                print 'DEBUG: SAN=', i
 
     def _log_initmsg(self):
         if self.headers.has_key('Content-Type') == True:
@@ -37,15 +26,28 @@ class fiapHandler(BaseHTTPRequestHandler):
         m += 'ctype=[%s]' % self.ctype
         self.log_message(m)
 
+    def _check_acl_san(self):
+        #
+        # XXX
+        # which one should be used here, self.connection or self.request ?
+        #
+        if opt.secure and not isinstance(self.request, ssl.SSLSocket):
+            return False
+        print 'xxx', self.request.cipher()
+        return cf.check_acl_san(self.request.getpeercert())
+
     def do_POST(self):
         self._log_initmsg()
-        fiap = fiapProto.fiapProto(requester_address=self.client_address, strict_check=True, debug=debug)
+        if opt.secure and self._check_acl_san() == False:
+            self.send_error(401)
+            return
+        fiap = fiapProto.fiapProto(requester_address=self.client_address, strict_check=True, debug=cf.debug)
         clen = int(self.headers['Content-Length'])
         s = self.rfile.read(clen)
         # XXX should implement timeout() if clen is more than the actual length.
         #post_data = urlparse.parse_qs(s.rfile.read(length).decode('utf-8'))
         doc = None
-        if debug > 0:
+        if cf.debug > 0:
             self.log_message('DEBUG: post body=%s' % s.replace('\n',''))
         if self.ctype.find('text/xml') != -1: # XXX should it compare with 0 ?
             doc = fiap.serverParseXML(s)
@@ -64,12 +66,15 @@ class fiapHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(doc)
         self.wfile.write('\n')
-        if debug > 0:
+        if cf.debug > 0:
             self.log_message('DEBUG: reply body=%s' % doc)
         return
 
     def do_GET(self):
         self._log_initmsg()
+        if opt.secure and self._check_acl_san() == False:
+            self.send_error(401)
+            return
         if self.path != '/wsdl':
             self._logConnMsg()
             msg = '/wsdl is only allowed to GET, but for %s' % self.path
@@ -79,7 +84,7 @@ class fiapHandler(BaseHTTPRequestHandler):
         # send WSDL
         self.send_response(200)
         self.end_headers()
-        fiap = fiapProto.fiapProto(strict_check=True, debug=debug)
+        fiap = fiapProto.fiapProto(strict_check=True, debug=cf.debug)
         self.wfile.write(fiap.getwsdl())
         self.wfile.write('\n')
         return
@@ -94,33 +99,36 @@ class fiapHandler(BaseHTTPRequestHandler):
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     pass
 
-def runs(port):
+def run(port=18880, config=None):
     server = None
-    try:
-        context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-        context.load_cert_chain(
-                certfile='cert/comp001-signedcert.pem',
-                keyfile='cert/comp001-privkey.pem')
-        context.load_verify_locations(cafile='cert/testCA-cert.pem')
-        context.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
-        context.verify_mode = ssl.CERT_REQUIRED
-        #context.set_ciphers(ciphers)
+    if not opt.secure:
         server = ThreadedHTTPServer(('', int(port)), fiapHandler)
-        server.socket = context.wrap_socket(server.socket, server_side=True)
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print '^C received, shutting down the web server'
-    except Exception as e:
-        print 'ERROR: ', e.message, str(type(e))
-    finally:
-        print 'cleaning'
-        if server != None:
-            server.socket.close()
+    else:
+        try:
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+            ctx.load_default_certs(purpose=ssl.Purpose.CLIENT_AUTH)
+            #ctx.set_ciphers(ciphers)
+            if config:
+                if config.key_file and config.cert_file:
+                    ctx.load_cert_chain(keyfile=config.key_file,
+                            certfile=config.cert_file)
+                ca_certs = config.ca_certs
+                if ca_certs:
+                    ctx.load_verify_locations(cafile=ca_certs)
+                ctx.verify_mode = ssl.CERT_REQUIRED
+            server = ThreadedHTTPServer(('', int(port)), fiapHandler)
+            if config.cert_request:
+                server.socket = ctx.wrap_socket(server.socket, server_side=True)
+        except Exception as e:
+            print 'ERROR: ', e.message, str(type(e))
+            if server != None:
+                server.socket.close()
+            exit(1)
 
-def run(port):
-    server = None
+    #
+    # start the server
+    #
     try:
-        server = ThreadedHTTPServer(('', int(port)), fiapHandler)
         server.serve_forever()
     except KeyboardInterrupt:
         print '^C received, shutting down the web server'
@@ -128,11 +136,10 @@ def run(port):
         print 'ERROR: ', e.message, str(type(e))
     finally:
         print 'cleaning'
-        if server != None:
-            server.socket.close()
+        server.socket.close()
 
 #
-# fiapy.py -d
+# parser
 #
 def parse_args():
     p = argparse.ArgumentParser()
@@ -140,8 +147,8 @@ def parse_args():
         help='specify the port number for this server.')
     p.add_argument('-s', action='store_true', dest='secure', default=False,
         help='specify to use TLS connection.')
-    p.add_argument('-c', action='store', dest='secure', default=False,
-        help='specify to use TLS connection.')
+    p.add_argument('-c', action='store', dest='cfile', default=False,
+        help='specify the file name of the configuration.')
     p.add_argument('-d', action='store', dest='debug', default=0,
         help='specify the debug level.')
     opt = p.parse_args()
@@ -151,17 +158,15 @@ def parse_args():
 # main
 #
 opt = parse_args()
-debug = opt.debug
+cf = fiapConfig.fiapConfig(opt.cfile, secure=opt.secure, debug=opt.debug)
 #
 # set the runner and default port if needed.
 #
 if opt.secure == True:
-    opt.run = runs
     if opt.port == None:
         opt.port = 18883
 else:
-    opt.run = run
     if opt.port == None:
         opt.port = 18880
 
-opt.run(port=opt.port)
+run(port=opt.port, config=cf)

@@ -10,12 +10,14 @@ import json
 import httplib2
 import ssl
 import fiapProto
-import fiapTools
+import fiapConfig
+
+secure = False
 
 class CertificateValidationError(httplib2.HttpLib2Error):
     pass
 
-def validating_server_factory(ca_args):
+def validating_server_factory(config):
     # we need to define a closure here because we don't control
     # the arguments this class is instantiated with
     class ValidatingHTTPSConnection(httplib2.HTTPSConnectionWithTimeout):
@@ -35,19 +37,20 @@ def validating_server_factory(ca_args):
             sock.connect((self.host, self.port))
             # end copypasta
 
-            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-            key_file = ca_args.get('key_file')
-            cert_file = ca_args.get('cert_file')
-            if key_file and cert_file:
-                context.load_cert_chain(keyfile=key_file, certfile=cert_file)
-            ca_certs = ca_args.get('ca_certs')
-            if ca_certs:
-                context.load_verify_locations(cafile=ca_certs)
-            context.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
-            context.verify_mode = ssl.CERT_REQUIRED
-
+            ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+            ctx.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
+            ctx.set_ciphers(config.ciphers)
+            if config:
+                if config.key_file and config.cert_file:
+                    ctx.load_cert_chain(keyfile=config.key_file,
+                            certfile=config.cert_file)
+                ca_certs = config.ca_certs
+                if ca_certs:
+                    ctx.load_verify_locations(cafile=ca_certs)
+                if config.cert_request:
+                    ctx.verify_mode = ssl.CERT_REQUIRED
             try:
-                self.sock = context.wrap_socket(sock)
+                self.sock = ctx.wrap_socket(sock)
             except ssl.SSLError:
                 # we have to capture the exception here and raise later because 
                 # httplib2 tries to ignore exceptions on connect
@@ -73,7 +76,7 @@ def validating_server_factory(ca_args):
                 raise self._exc_info[1], None, self._exc_info[2]
     return ValidatingHTTPSConnection
 
-def postrequest(url, body=None, ctype='text/xml; charset=utf-8', ca_args={}):
+def postrequest(url, body=None, ctype='text/xml; charset=utf-8', config=None):
     #
     # set headers
     #
@@ -85,8 +88,8 @@ def postrequest(url, body=None, ctype='text/xml; charset=utf-8', ca_args={}):
     # set http_args
     #
     http_args = {}        
-    if url.startswith('https://') and len(ca_args) > 0:
-        http_args['connection_type'] = validating_server_factory(ca_args)
+    if secure:
+        http_args['connection_type'] = validating_server_factory(config)
     #
     # start the http connection
     #
@@ -155,6 +158,8 @@ def parse_args():
 if __name__ == '__main__' :
     opt = parse_args()
     debug = opt.debug
+    if opt.url.startswith('https://'):
+        secure = True
     url, host = set_default_port(opt.url)
     if debug > 0:
         print 'connect to', host
@@ -195,11 +200,12 @@ if __name__ == '__main__' :
     #
     # parse the configuration file if specified.
     #
-    ca_args = fiapTools.parse_config_file(opt.cfile)
+    cf = fiapConfig.fiapConfig(opt.cfile, secure=secure, debug=debug)
+    print cf.ciphers
     #
     # send the request and get a response.
     #
-    res = postrequest(url, body=req_doc, ctype=ctype, ca_args=ca_args)
+    res = postrequest(url, body=req_doc, ctype=ctype, config=cf)
     if res == None:
         print 'ERROR(FIAP): ' + fiap.emsg
         exit(1)

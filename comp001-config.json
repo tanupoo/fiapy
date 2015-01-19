@@ -6,15 +6,22 @@
 
         "acl" : {
             "gw001.hongo.test.gutp.jp": {
-                "accept": [ "*" ]
+                "*": { "*": "reject" }
             },
             "app002.hongo.test.gutp.jp": {
-                "accept": [ "http://example.org/fiapy/test/p01" ],
-                "reject": [ "*" ]
+                "http://example.org/fiapy/test/p01": {
+                    "data": "accept",
+                    "query": "accept"
+                },
+                "http://example.org/fiapy/test/p02": {
+                    "query": "accept"
+                },
+                "*": { "*": "reject" }
             },
             "app003.hongo.test.gutp.jp": {
-                "rejct": [ "*" ]
-            }
+                "*": { "*": "reject" }
+            },
+            "*": { "*": { "*": "reject" } }
         }
     }
 }
