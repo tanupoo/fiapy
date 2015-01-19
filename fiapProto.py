@@ -101,6 +101,28 @@ class fiapProto():
         return json.dumps(ret)
 
     #
+    # parse keys in the GET request
+    #
+    def parseGETRequest(self, url_path):
+        pids = []
+        for k in url_path[2:].split('&'):
+            if k.startswith('k=') == False:
+                self.emsg = 'invalid keyword, %s' % k
+                return None
+            pids.append(k[2:])
+        if not pids:
+            self.emsg = 'no keys are specified'
+            return None
+        qspec = {}
+        qspec['type'] = 'storage'
+        qspec['key'] = []
+        for pid in pids:
+            qspec['key'].append({pid:{'attrName':'time', 'select':'maximum'}})
+        req = {'fiap':{'version':_FIAPY_FIAP_VERSION,'queryRQ':qspec}}
+        print 'DEBUG:', req
+        return self.serverParseJSON(json.dumps(req))
+
+    #
     # handler to parse JSON
     #
     def _parseJSON(self, j0, handler):

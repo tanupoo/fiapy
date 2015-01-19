@@ -20,7 +20,7 @@ class fiapHandler(BaseHTTPRequestHandler):
         if self.headers.has_key('Content-Type') == True:
             self.ctype = self.headers['Content-Type']
         else:
-            self.ctype = 'text/xml' # default content-type to be parsed.
+            self.ctype = 'text/html' # default content-type to be parsed.
         m = 'client=%s[%d] ' % self.client_address
         m += 'path=[%s] ' % self.path
         m += 'ctype=[%s]' % self.ctype
@@ -33,7 +33,6 @@ class fiapHandler(BaseHTTPRequestHandler):
         #
         if opt.secure and not isinstance(self.request, ssl.SSLSocket):
             return False
-        print 'xxx', self.request.cipher()
         return cf.check_acl_san(self.request.getpeercert())
 
     def do_POST(self):
@@ -75,19 +74,34 @@ class fiapHandler(BaseHTTPRequestHandler):
         if opt.secure and self._check_acl_san() == False:
             self.send_error(401)
             return
-        if self.path != '/wsdl':
+        if self.path == '/wsdl':
+            # send WSDL
+            self.send_response(200)
+            self.end_headers()
+            fiap = fiapProto.fiapProto(strict_check=True, debug=cf.debug)
+            self.wfile.write(fiap.getwsdl())
+            self.wfile.write('\n')
+            return
+        elif self.path.startswith('/?'):
+            fiap = fiapProto.fiapProto(strict_check=True, debug=cf.debug)
+            doc = fiap.parseGETRequest(self.path)
+            if doc == None:
+                self.log_message('ERROR: %s' % fiap.getemsg())
+                self.send_error(403, fiap.getemsg())
+                return
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(doc)
+            self.wfile.write('\n')
+            if cf.debug > 0:
+                self.log_message('DEBUG: reply body=%s' % doc)
+            return
+        else:
             self._logConnMsg()
-            msg = '/wsdl is only allowed to GET, but for %s' % self.path
+            msg = 'unknown path, %s' % self.path
             self.log_message('ERROR: %s' % msg)
             self.send_error(403, msg)
             return
-        # send WSDL
-        self.send_response(200)
-        self.end_headers()
-        fiap = fiapProto.fiapProto(strict_check=True, debug=cf.debug)
-        self.wfile.write(fiap.getwsdl())
-        self.wfile.write('\n')
-        return
 
     def do_PUT(self):
         self._log_initmsg()
