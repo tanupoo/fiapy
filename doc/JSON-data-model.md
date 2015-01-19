@@ -109,15 +109,15 @@ TBD.
 
 ~~~~
 
-<version spec> specifies the version of the JSON format.
+"version spec" specifies the version of the JSON format.
 All components supporting this specification must set "20140401".
 
-<method spec> specifies the method of the JSON format.
+"method spec" specifies the method of the JSON format.
 one of four entries must be specified.
 
-<query request spec> in <query response spec> is optional.
+"query request spec" in "query response spec" is optional.
 
-<time spec> should conform to the ISO8601 date and time string.
+"time spec" should conform to the ISO8601 date and time string.
 A timezone indicator should be used for large scale interoperability.
 For interoperability, this specification recommends to use the following format.
 
@@ -125,18 +125,18 @@ For interoperability, this specification recommends to use the following format.
     2014-11-21T07:54:03+0900
 ~~~~
 
-The format of <point id> must confom to the IEEE1888 specification.
+The format of "point id" must confom to the IEEE1888 specification.
 
 ~~~~
     "http://fiap.example.org/test/home/light"
 ~~~~
 
-<point spec> in <query response spec> is valid for the FETCH protocol.
+"point spec" in "query response spec" is valid for the FETCH protocol.
     TBC.
 
-<query type spec> must be either "storage" or "stream".
+"query type spec" must be either "storage" or "stream".
 
-<attribute spec> is optional.
+"attribute spec" is optional.
 
 TBD: if you want to specify an "OR" condition for a single point id.
 you need to specify two keys.
@@ -148,23 +148,23 @@ e.g. getting both a maximum value and a minimum value.
     ]
 ~~~~
 
-<condition spec> must be formed by some of the entries.
+"condition spec" must be formed by some of the entries.
 each etnry must be used at once.
 "state" : "changed" is usually used to initiate the TRAP protocol.
 
-<value> is a string representing the value.
+"value" is a string representing the value.
 it must be quoted by a double quotation and
 a double quatation is not allowed in the content of the value.
 
-<uuid spec> is optional.
+"uuid spec" is optional.
 
-<acceptableSize spec> is optional.
+"acceptableSize spec" is optional.
 
-<cursor spec> is optional and valid to use when the query method is used.
+"cursor spec" is optional and valid to use when the query method is used.
     Should this description be put in the IEEE1888 base specification.  TBC.
-the content of <cursor> depends on the implementation.
+the content of "cursor" depends on the implementation.
 
-<ttl spec>, <callbackData spec> and <callbackControl spec> are valid in the TRAP protocol.
+"ttl spec", "callbackData spec" and "callbackControl spec" are valid in the TRAP protocol.
 
 ## response message
 
@@ -189,61 +189,7 @@ The JSON format can be simplified in the case of a reponse to the GET method.
 
 <response status spec> should be present.
 
-### (TBD) example 1
-
-- a query request message
-
-~~~~
-    {
-        "fiap" : {
-            "version" : "20140401",
-            "queryRQ" : {
-                "type" : "storage",
-                "acceptableSize" : "2",
-                "key" : {
-                    "http://example.org/light/p02" : {
-                        "attrName" : "value",
-                        "gteq" : "2002",
-                        "lteq"  : "2003"
-                    },
-                    "http://example.org/light/p03" : {
-                        "attrName" : "time",
-                        "select" : "maximum"
-                    }
-                }
-            }
-        }
-    }
-~~~~
-
-- a reponse message of a query message
-
-~~~~
-    {
-        "fiap": {
-            "version": "20140401",
-            "queryRS": {
-                "query": {
-                    "type": "storage"
-                }
-                "point": {
-                    "http://fiap.tanu.org/test/alps01/temp": [
-                        { "time": "2014-11-21T07:54:03+0900", "value": "26.0" },
-                        { "time": "2014-11-21T07:55:00+0900", "value": "26.5" }
-                    ],
-                    "http://fiap.tanu.org/test/alps01/light": [
-                      { "time": "2014-11-21T07:54:03+0900", "value": "1301" },
-                      { "time": "2014-11-21T07:55:00+0900", "value": "1400" }
-                    ]
-                }
-            }
-        }
-    }
-~~~~
-
-### (TBD) example 2
-
-** currently implemented. **
+### example: query
 
 - a query request message
 
@@ -303,67 +249,7 @@ The JSON format can be simplified in the case of a reponse to the GET method.
     }
 ~~~~
 
-### (TBD) example 3
-
-- a query request message
-
-~~~~
-    {
-        "fiap" : {
-            "version" : "20140401",
-            "queryRQ" : {
-                "type" : "storage",
-                "acceptableSize" : "2",
-                "key" : [
-                    {
-                        "id" : "http://example.org/light/p02",
-                        "attrName" : "value",
-                        "gteq" : "2002",
-                        "lteq"  : "2003"
-                    },
-                    {
-                        "kd" : "http://example.org/light/p03",
-                        "attrName" : "time",
-                        "select" : "maximum"
-                    }
-                ]
-            }
-        }
-    }
-~~~~
-
-- a reponse message of a query message
-
-~~~~
-    {
-        "fiap": {
-            "version": "20140401",
-            "queryRS": {
-                "query": {
-                    "type": "storage"
-                }
-                "point": [
-                    {
-                        "http://fiap.tanu.org/test/alps01/temp": [
-                            { "time": "2014-11-21T07:54:03+0900", "value": "26.0" },
-                            { "time": "2014-11-21T07:55:00+0900", "value": "26.5" }
-                        ],
-                    },
-                    {
-                        "http://fiap.tanu.org/test/alps01/light": [
-                            { "time": "2014-11-21T07:54:03+0900", "value": "1301" },
-                            { "time": "2014-11-21T07:55:00+0900", "value": "1400" }
-                        ]
-                    }
-                ]
-            }
-        }
-    }
-~~~~
-
-### example
-
-- a write request message
+### example: write
 
 ~~~~
     {
