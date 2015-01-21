@@ -201,7 +201,6 @@ if __name__ == '__main__' :
     # parse the configuration file if specified.
     #
     cf = fiapConfig.fiapConfig(opt.cfile, secure=secure, debug=debug)
-    print cf.ciphers
     #
     # send the request and get a response.
     #
