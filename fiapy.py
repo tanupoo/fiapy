@@ -41,8 +41,17 @@ class fiapHandler(BaseHTTPRequestHandler):
             self.send_error(401)
             return
         fiap = fiapProto.fiapProto(requester_address=self.client_address, strict_check=True, debug=cf.debug)
-        clen = int(self.headers['Content-Length'])
-        s = self.rfile.read(clen)
+        clen = self.headers.getheader('Content-Length', None)
+        if clen == None:
+            if False:
+                self.send_error(411)
+                return
+            else:
+                # XXX hack: no content-length
+                s = self.rfile.read()
+        else:
+            clen = int(clen)
+            s = self.rfile.read(clen)
         # XXX should implement timeout() if clen is more than the actual length.
         #post_data = urlparse.parse_qs(s.rfile.read(length).decode('utf-8'))
         doc = None
