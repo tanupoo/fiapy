@@ -106,7 +106,7 @@ class fiapProto():
     def parseGETRequest(self, url_path):
         pids = []
         for k in url_path[2:].split('&'):
-            if k.startswith('k=') == False:
+            if k.startswith('k=') == False and k.startswith('_=') == False:
                 self.emsg = 'invalid keyword, %s' % k
                 return None
             pids.append(k[2:])
