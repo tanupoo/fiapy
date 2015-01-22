@@ -12,6 +12,8 @@ import ssl
 import fiapProto
 import fiapConfig
 
+FIAPC_TIMEOUT = 10
+
 class CertificateValidationError(httplib2.HttpLib2Error):
     pass
 
@@ -63,12 +65,13 @@ def validating_server_factory(config):
 
                 # this might be redundant
                 server_cert = self.sock.getpeercert()
-                if debug > 2:
-                    print 'DEBUG:server cert=:', server_cert
+                if opt.debug >= 2:
+                    print 'DEBUG: server cert=:', server_cert
                 if not server_cert:
                     raise CertificateValidationError(repr(server_cert))
             for i in server_cert['subjectAltName']:
-                print 'DEBUG:SAN=', i
+                if opt.debug >= 2:
+                    print 'DEBUG: SAN=', i
 
         def getresponse(self):
             if not self._exc_info:
@@ -83,8 +86,7 @@ def postrequest(url, body=None, ctype='text/xml; charset=utf-8', config=None):
     #
     headers = {}
     headers['Content-Type'] = ctype
-    headers['Accept'] = ctype
-    headers['Content-Length'] = '%s' % len(body)
+    headers['Content-Length'] = str(len(body))
     #
     # set http_args
     #
@@ -94,14 +96,20 @@ def postrequest(url, body=None, ctype='text/xml; charset=utf-8', config=None):
     #
     # start the http connection
     #
-    http = httplib2.Http(timeout=10)
+    http = httplib2.Http(timeout=FIAPC_TIMEOUT)
     try:
         res_headers, res_body = http.request(url, method='POST',
                 body=body, headers=headers, **http_args)
     except Exception as e:
         print e, str(type(e))
         exit(1)
-    print 'HTTP: %s %s' % (res_headers.status, res_headers.reason)
+    if opt.debug >= 1:
+        print 'DEBUG: HTTP: %s %s' % (res_headers.status, res_headers.reason)
+    if opt.debug >= 2:
+        print 'DEBUG: === BEGIN: response headers'
+        for k, v in res_headers.iteritems():
+            print 'DEBUG: %s: %s' % (k, v)
+        print 'DEBUG: === END: response headers'
     return res_body
 
 def soapGetAddressLocation(wsdl):
@@ -152,92 +160,90 @@ def parse_args():
     p.add_argument('-w', action='store', dest='wsdl', default=None,
         help='specify the wsdl.')
     p.add_argument('-d', action='store', dest='debug', default=0,
-        help='specify the debug level.')
+        help='specify the debug level. 0, 1, or 2')
     return p.parse_args()
 
 #
 # main
 #
-if __name__ == '__main__' :
-    opt = parse_args()
-    debug = opt.debug
-    if opt.url.startswith('https://'):
-        sec_lv = 1
-    sec_lv = opt.sec_lv
-    url, host = set_default_port(opt.url)
-    if debug > 0:
-        print 'connect to', host
+opt = parse_args()
+if opt.url.startswith('https://'):
+    sec_lv = 1
+sec_lv = opt.sec_lv
+url, host = set_default_port(opt.url)
+if opt.debug >= 1:
+    print 'DEBUG: connect to', host
 
-    #soapGetAddressLocation(opt.wsdl)
+#soapGetAddressLocation(opt.wsdl)
 
-    if opt.bfile != None:
-        fp = open(opt.bfile)
+if opt.bfile != None:
+    fp = open(opt.bfile)
+else:
+    fp = sys.stdin
+src = fp.read()
+if src == None:
+    print 'ERROR: src document is nothing'
+    exit(1)
+
+fiap = fiapProto.fiapProto(debug=opt.debug)
+
+#
+# make a request
+#
+req_doc = ''
+if opt.req_to_xml == True:
+    ctype = 'text/xml; charset=utf-8'
+    if re.match('^\<\?xml', src):
+        req_doc = src
     else:
-        fp = sys.stdin
-    src = fp.read()
-    if src == None:
-        print 'ERROR: src document is nothing'
-        exit(1)
-
-    fiap = fiapProto.fiapProto(debug=debug)
-
-    #
-    # make a request
-    #
-    req_doc = ''
-    if opt.req_to_xml == True:
-        ctype = 'text/xml; charset=utf-8'
-        if re.match('^\<\?xml', src):
-            req_doc = src
-        else:
-            req_doc = fiap.JSONtoXML(src)
+        req_doc = fiap.JSONtoXML(src)
+else:
+    ctype = 'text/json; charset=utf-8'
+    if re.match('^\<\?xml', src) == None:
+        req_doc = src
     else:
-        ctype = 'text/json; charset=utf-8'
-        if re.match('^\<\?xml', src) == None:
-            req_doc = src
-        else:
-            req_doc = fiap.XMLtoJSON(src)
-    if req_doc == None:
-        print 'ERROR: %s' % fiap.getemsg()
-        exit(1)
+        req_doc = fiap.XMLtoJSON(src)
+if req_doc == None:
+    print 'ERROR: %s' % fiap.getemsg()
+    exit(1)
 
-    if debug > 2:
-        print 'Request:', req_doc
-        
+if opt.debug >= 1:
+    print 'DEBUG: Request:', req_doc
 
-    #
-    # parse the configuration file if specified.
-    #
-    cf = fiapConfig.fiapConfig(opt.cfile, security_level=sec_lv, debug=debug)
-    #
-    # send the request and get a response.
-    #
-    res = postrequest(url, body=req_doc, ctype=ctype, config=cf)
-    if res == None:
-        print 'ERROR(FIAP): ' + fiap.emsg
-        exit(1)
-    if debug > 2:
-        print 'Response:', res
+#
+# parse the configuration file if specified.
+#
+cf = fiapConfig.fiapConfig(opt.cfile, security_level=sec_lv, debug=opt.debug)
+#
+# send the request and get a response.
+#
+res = postrequest(url, body=req_doc, ctype=ctype, config=cf)
+if res == None:
+    print 'ERROR(FIAP): ' + fiap.emsg
+    exit(1)
+if opt.debug >= 1:
+    print 'DEBUG: Response:', res
 
-    #
-    # print the response
-    #
-    if opt.res_to_xml == True:
-        if re.match('^\<\?xml', res):
-            res_doc = res
-        else:
-            res_doc = fiap.JSONtoXML(res)
+#
+# print the response
+#
+if opt.res_to_xml == True:
+    if re.match('^\<\?xml', res):
+        res_doc = res
     else:
-        if re.match('^\<\?xml', res):
-            res_doc = fiap.XMLtoJSON(res)
-        else:
-            res_doc = res
-        try:
-            res_doc = json.dumps(json.loads(res_doc), indent=2)
-        except ValueError as e:
-            print 'ERROR: JSON parse error', e
-            exit(1)
-    if req_doc == None:
-        print 'ERROR: %s' % fiap.getemsg()
+        res_doc = fiap.JSONtoXML(res)
+else:
+    if re.match('^\<\?xml', res):
+        res_doc = fiap.XMLtoJSON(res)
+    else:
+        res_doc = res
+    try:
+        res_doc = json.dumps(json.loads(res_doc), indent=2)
+    except ValueError as e:
+        print 'ERROR: JSON parse error', e
         exit(1)
-    print res_doc
+if req_doc == None:
+    print 'ERROR: %s' % fiap.getemsg()
+    exit(1)
+
+print res_doc
