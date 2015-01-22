@@ -116,10 +116,12 @@ you have to specify the port number when you launch fiapy.py.
 
 ## TODO
 
+- documentation.
+- content-length considertaions.
 - implement TRAP protocol, trapy.
 - consider the error message when the translation error happens.
 - consider the error message when the method hasn't been identified.
-- client's cursor handling.
+- client(fiapyc) side cursor handling.
 
 ## IEEE1888.3 security
 
