@@ -33,9 +33,10 @@ class fiapConfig():
             raise ValueError(msg)
         if self.security_level and jc.get('security'):
             cf_sec = jc['security']
-            self.security_level = cf_sec.get('level')
-            if security_level > self.security_level:
-                self.security_level = security_level
+            sec_lv = cf_sec.get('level')
+            # override security_level if the argument is smaller.
+            if self.security_level < sec_lv:
+                self.security_level = sec_lv
             if cf_sec.get('ciphers'):
                 self.ciphers = cf_sec.get('ciphers')
             self.key_file = cf_sec.get('key_file')

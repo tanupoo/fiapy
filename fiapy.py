@@ -209,12 +209,12 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('-p', action='store', dest='port', default=None,
         help='specify the port number for this server.')
-    p.add_argument('-s', action='store_true', dest='sec_lv', default=0,
-        help='specify to use TLS connection.')
+    p.add_argument('-s', action='store', dest='sec_lv', default=0,
+        help='specify to use TLS connection. 0, 1, or 2')
     p.add_argument('-c', action='store', dest='cfile', default=False,
         help='specify the file name of the configuration.')
     p.add_argument('-d', action='store', dest='debug', default=0,
-        help='specify the debug level.')
+        help='specify the debug level. 0, 1, or 2')
     opt = p.parse_args()
     return opt
 
