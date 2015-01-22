@@ -12,8 +12,6 @@ import ssl
 import fiapProto
 import fiapConfig
 
-secure = False
-
 class CertificateValidationError(httplib2.HttpLib2Error):
     pass
 
@@ -37,8 +35,11 @@ def validating_server_factory(config):
             sock.connect((self.host, self.port))
             # end copypasta
 
-            ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
-            ctx.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
+            if config.security_level == 2:
+                ctx = ssl.SSLContext(ssl.PROTOCOL_TLSv1_2)
+                ctx.load_default_certs(purpose=ssl.Purpose.SERVER_AUTH)
+            else:
+                ctx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             ctx.set_ciphers(config.ciphers)
             if config:
                 if config.key_file and config.cert_file:
@@ -88,7 +89,7 @@ def postrequest(url, body=None, ctype='text/xml; charset=utf-8', config=None):
     # set http_args
     #
     http_args = {}        
-    if secure:
+    if config.security_level:
         http_args['connection_type'] = validating_server_factory(config)
     #
     # start the http connection
@@ -146,6 +147,8 @@ def parse_args():
         help='specify to send an XML request.')
     p.add_argument('-X', action='store_true', dest='res_to_xml', default=False,
         help='specify to output an XML response.')
+    p.add_argument('-s', action='store', dest='sec_lv', default=None,
+        help='specify the security level. 0, 1, or 2')
     p.add_argument('-w', action='store', dest='wsdl', default=None,
         help='specify the wsdl.')
     p.add_argument('-d', action='store', dest='debug', default=0,
@@ -159,7 +162,8 @@ if __name__ == '__main__' :
     opt = parse_args()
     debug = opt.debug
     if opt.url.startswith('https://'):
-        secure = True
+        sec_lv = 1
+    sec_lv = opt.sec_lv
     url, host = set_default_port(opt.url)
     if debug > 0:
         print 'connect to', host
@@ -197,10 +201,14 @@ if __name__ == '__main__' :
         print 'ERROR: %s' % fiap.getemsg()
         exit(1)
 
+    if debug > 2:
+        print 'Request:', req_doc
+        
+
     #
     # parse the configuration file if specified.
     #
-    cf = fiapConfig.fiapConfig(opt.cfile, secure=secure, debug=debug)
+    cf = fiapConfig.fiapConfig(opt.cfile, security_level=sec_lv, debug=debug)
     #
     # send the request and get a response.
     #
@@ -208,7 +216,7 @@ if __name__ == '__main__' :
     if res == None:
         print 'ERROR(FIAP): ' + fiap.emsg
         exit(1)
-    if debug > 0:
+    if debug > 2:
         print 'Response:', res
 
     #
