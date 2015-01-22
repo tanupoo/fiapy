@@ -12,12 +12,12 @@ class fiapConfig():
     cert_file = None
     ca_certs = None
     cert_request = False     # if set, send a CR even if ca_path set.
-    secure = False
+    security_level = False
     acl = None
     acl_san_wildcard = None
 
-    def __init__(self, cfile, secure=False, debug=0):
-        self.secure = secure
+    def __init__(self, cfile, security_level=0, debug=0):
+        self.security_level = security_level
         self.debug = debug
         if cfile:
             self._parse_config_file(cfile)
@@ -31,8 +31,11 @@ class fiapConfig():
             if self.debug > 0:
                 print msg
             raise ValueError(msg)
-        if self.secure and jc.get('security'):
+        if self.security_level and jc.get('security'):
             cf_sec = jc['security']
+            self.security_level = cf_sec.get('level')
+            if security_level > self.security_level:
+                self.security_level = security_level
             if cf_sec.get('ciphers'):
                 self.ciphers = cf_sec.get('ciphers')
             self.key_file = cf_sec.get('key_file')
