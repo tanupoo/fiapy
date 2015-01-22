@@ -6,7 +6,7 @@
 
         "acl" : {
             "gw001.hongo.test.gutp.jp": {
-                "*": { "*": "reject" }
+                "*": { "*": "accept" }
             },
             "app002.hongo.test.gutp.jp": {
                 "http://example.org/fiapy/test/p01": {
