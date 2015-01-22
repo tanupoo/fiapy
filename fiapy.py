@@ -31,17 +31,25 @@ class fiapHandler(BaseHTTPRequestHandler):
         # XXX
         # which one should be used here, self.connection or self.request ?
         #
-        if opt.secure and not isinstance(self.request, ssl.SSLSocket):
+        if opt.sec_lv and not isinstance(self.request, ssl.SSLSocket):
             return False
         return cf.check_acl_san(self.request.getpeercert())
 
     def do_POST(self):
         self._log_initmsg()
-        if opt.secure and self._check_acl_san() == False:
+        if opt.sec_lv and self._check_acl_san() == False:
             self.send_error(401)
             return
         fiap = fiapProto.fiapProto(requester_address=self.client_address, strict_check=True, debug=cf.debug)
-        clen = self.headers.getheader('Content-Length', None)
+        #
+        # get content-length of the request
+        #
+        clen = 0
+        if self.headers.getheader('Transfer-Encoding', None) == 'chunked':
+            clen = self.rfile.readline()
+            clen = int(clen, 16)
+        else:
+            clen = self.headers.getheader('Content-Length', None)
         if clen == None:
             if False:
                 self.send_error(411)
@@ -56,7 +64,7 @@ class fiapHandler(BaseHTTPRequestHandler):
         #post_data = urlparse.parse_qs(s.rfile.read(length).decode('utf-8'))
         doc = None
         if cf.debug > 0:
-            self.log_message('DEBUG: post body=%s' % s.replace('\n',''))
+            self.log_message('DEBUG: post body (len=%d): %s' % (clen, s.replace('\n\r','')))
         if self.ctype.find('text/xml') != -1: # XXX should it compare with 0 ?
             doc = fiap.serverParseXML(s)
         elif self.ctype.find('text/json') != -1:
@@ -71,6 +79,9 @@ class fiapHandler(BaseHTTPRequestHandler):
             self.send_error(403, fiap.getemsg())
             return
         self.send_response(200)
+        #self.protocol_version = 'HTTP/1.1'
+        self.send_header('Content-Length', len(doc))
+        self.send_header('Content-Type', self.ctype)
         self.end_headers()
         self.wfile.write(doc)
         self.wfile.write('\n')
@@ -80,15 +91,18 @@ class fiapHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self._log_initmsg()
-        if opt.secure and self._check_acl_san() == False:
+        if opt.sec_lv and self._check_acl_san() == False:
             self.send_error(401)
             return
         if self.path == '/wsdl':
-            # send WSDL
+            fiap = fiapProto.fiapProto(strict_check=True, debug=cf.debug)
+            doc = fiap.getwsdl()
+            # XXX python can't handle send_header() this case.
+            #self.send_header('Content-Length', len(doc))
+            #self.send_header('Content-Type', 'text/xml; charset=utf-8');
             self.send_response(200)
             self.end_headers()
-            fiap = fiapProto.fiapProto(strict_check=True, debug=cf.debug)
-            self.wfile.write(fiap.getwsdl())
+            self.wfile.write(doc)
             self.wfile.write('\n')
             return
         elif self.path.startswith('/?'):
@@ -106,7 +120,6 @@ class fiapHandler(BaseHTTPRequestHandler):
                 self.log_message('DEBUG: reply body=%s' % doc)
             return
         else:
-            self._logConnMsg()
             msg = 'unknown path, %s' % self.path
             self.log_message('ERROR: %s' % msg)
             self.send_error(403, msg)
@@ -124,7 +137,7 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 
 def run(port=18880, config=None):
     server = None
-    if not opt.secure:
+    if not opt.sec_lv:
         server = ThreadedHTTPServer(('', int(port)), fiapHandler)
     else:
         try:
@@ -168,7 +181,7 @@ def parse_args():
     p = argparse.ArgumentParser()
     p.add_argument('-p', action='store', dest='port', default=None,
         help='specify the port number for this server.')
-    p.add_argument('-s', action='store_true', dest='secure', default=False,
+    p.add_argument('-s', action='store_true', dest='sec_lv', default=0,
         help='specify to use TLS connection.')
     p.add_argument('-c', action='store', dest='cfile', default=False,
         help='specify the file name of the configuration.')
@@ -181,11 +194,11 @@ def parse_args():
 # main
 #
 opt = parse_args()
-cf = fiapConfig.fiapConfig(opt.cfile, secure=opt.secure, debug=opt.debug)
+cf = fiapConfig.fiapConfig(opt.cfile, security_level=opt.sec_lv, debug=opt.debug)
 #
 # set the runner and default port if needed.
 #
-if opt.secure == True:
+if opt.sec_lv:
     if opt.port == None:
         opt.port = 18883
 else:
