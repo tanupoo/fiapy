@@ -14,7 +14,7 @@ REGISTER and LOOKUP are not supported.
 Experimentaly, it supports:
 
 - the JSON format.
-- translation between XML and JSON, vice varsa.
+- translation between XML and JSON, vice versa.
 - GET method.
 
 For more detail about this features,
@@ -117,9 +117,9 @@ you have to specify the port number when you launch fiapy.py.
 ## TODO
 
 - implement TRAP protocol, trapy.
-- implement GET method.
 - consider the error message when the translation error happens.
 - consider the error message when the method hasn't been identified.
+- client's cursor handling.
 
 ## IEEE1888.3 security
 
