@@ -118,6 +118,7 @@ you have to specify the port number when you launch fiapy.py.
 
 - documentation.
 - content-length considertaions.
+- good log messages in operation.  e.g. logging point id.
 - implement TRAP protocol, trapy.
 - consider the error message when the translation error happens.
 - consider the error message when the method hasn't been identified.
