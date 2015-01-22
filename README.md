@@ -30,17 +30,20 @@ To run it, you can simply type like below:
     ~~~~
 
 The default port number is 18880.
-If you want to see the debug message, you add "-d 99" as the parameter.
+If you want to see the debug message, you add "-d (number)" into the parameter.
+Using "-d 2" will show verbose messages.
 
-If you want to use the IEEE1888.3 security, you simply add "-s" option.
+If you want to use the IEEE1888.3 security,
+you have to add "-s" option with the security level.
 
     ~~~~
-    % fiapy.py -s
+    % fiapy.py -s 2
     ~~~~
 
 The default port number is 18883.
 
 It's not allowed to use both secure and non-secure mode in same time.
+If you want to run secure and non-secure severs, you have to run both.
 
 To get a latest value of the key, you can get it like below.
 
@@ -48,7 +51,7 @@ To get a latest value of the key, you can get it like below.
     wget -t 1 -q -O - 'http://localhost:18880/?k=http://example.org/fiapy/test/p03&k=http://example.org/fiapy/test/p01'
     ~~~~
 
-### fiapClient.py
+### fiapc.py
 
 It's an IEEE1888 client implementation.
 It reads a request from the standard input or a file with -f option.
@@ -58,7 +61,7 @@ If you provide a file in XML format, it automatically translates into JSON.
 For example, to send a FETCH request in JSON,
 
 ~~~~
-% fiapClient.py -e http://fiap.example.org/storage -f fetch.json
+% fiapc.py -e http://fiap.example.org/storage -f fetch.json
 ~~~~
 
 If you want to send a request in XML, you have to add "-x" option into the parameter.
