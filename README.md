@@ -137,7 +137,7 @@ IEEE1888-level rejection has not been supported yet.
 ### current specification
 
 - It always sends the certificate request.
-- It doesn't hand the CA directory.
+- It doesn't case the CA directory.
 
 ## Timezone
 
