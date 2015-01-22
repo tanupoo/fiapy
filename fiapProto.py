@@ -15,9 +15,9 @@ import uuid
 
 _FIAPY_FIAP_VERSION = '20140401'
 _FIAPY_MONGODB = { 'port': 27036 }
-_FIAPY_MAX_ACCEPTABLESIZE = 60
+_FIAPY_MAX_ACCEPTABLESIZE = 10
 _FIAPY_WSDL = './fiapy.wsdl'
-_FIAPY_SERVICE_PORT = 'http://localhost:40080/'
+_FIAPY_SERVICE_PORT = 'http://133.11.168.118:18880/' # XXX should be picked dynamically.
 _FIAPY_PRINT_TIMEZONE = 'Asia/Tokyo'
 _FIAPY_MAX_TRAPTTL = 3600 # 1 hour
 
@@ -106,10 +106,13 @@ class fiapProto():
     def parseGETRequest(self, url_path):
         pids = []
         for k in url_path[2:].split('&'):
-            if k.startswith('k=') == False and k.startswith('_=') == False:
+            if k.startswith('k=') == True:
+                pids.append(k[2:])
+            elif k.startswith('_=') == True:
+                pass
+            else:
                 self.emsg = 'invalid keyword, %s' % k
                 return None
-            pids.append(k[2:])
         if not pids:
             self.emsg = 'no keys are specified'
             return None
