@@ -9,8 +9,6 @@ This memo defines another two formats.
     1) JSON format
     2) URL format
 
-The JSON format is defined in the next section.
-
 ## JSON format
 
 The JSON format is used for both a request and response of the POST method.
@@ -25,7 +23,7 @@ TBD.
 
 ### Definition
 
-~~~~
+    ~~~~
     {
         "fiap" : {
             <version spec>, 
@@ -106,8 +104,7 @@ TBD.
     <callbackData spec> := "callbackData" : <callback data point>
 
     <callbackControl spec> := "callbackControl" : <callback control point>
-
-~~~~
+    ~~~~
 
 "version spec" specifies the version of the JSON format.
 All components supporting this specification must set "20140401".
@@ -121,15 +118,15 @@ one of four entries must be specified.
 A timezone indicator should be used for large scale interoperability.
 For interoperability, this specification recommends to use the following format.
 
-~~~~
+    ~~~~
     2014-11-21T07:54:03+0900
-~~~~
+    ~~~~
 
 The format of "point id" must confom to the IEEE1888 specification.
 
-~~~~
+    ~~~~
     "http://fiap.example.org/test/home/light"
-~~~~
+    ~~~~
 
 "point spec" in "query response spec" is valid for the FETCH protocol.
     TBC.
@@ -141,12 +138,13 @@ The format of "point id" must confom to the IEEE1888 specification.
 TBD: if you want to specify an "OR" condition for a single point id.
 you need to specify two keys.
 e.g. getting both a maximum value and a minimum value.
-~~~~
+
+    ~~~~
     "key" : [
         { "a": { "attrName":"value", "select":"maximum" } },
         { "a": { "attrName":"value", "select":"minimum" } }
     ]
-~~~~
+    ~~~~
 
 "condition spec" must be formed by some of the entries.
 each etnry must be used at once.
@@ -166,7 +164,7 @@ the content of "cursor" depends on the implementation.
 
 "ttl spec", "callbackData spec" and "callbackControl spec" are valid in the TRAP protocol.
 
-## response message
+### response message
 
 if the request is acceptable and no error is found, the reponse message must be "200 OK".
 other messages may be referred to the setion 10 of RFC2616.
@@ -175,7 +173,7 @@ other messages may be referred to the setion 10 of RFC2616.
 
 The JSON format can be simplified in the case of a reponse to the GET method.
 
-~~~~
+    ~~~~
     {
         "fiap" : {
             <version spec>, 
@@ -185,15 +183,15 @@ The JSON format can be simplified in the case of a reponse to the GET method.
             }
         }
     }
-~~~~
+    ~~~~
 
-<response status spec> should be present.
+"response status spec" should be present.
 
 ### example: query
 
 - a query request message
 
-~~~~
+    ~~~~
     {
         "fiap" : {
             "version" : "20140401",
@@ -218,11 +216,11 @@ The JSON format can be simplified in the case of a reponse to the GET method.
             }
         }
     }
-~~~~
+    ~~~~
 
 - a reponse message of a query message
 
-~~~~
+    ~~~~
     {
         "fiap": {
             "version": "20140401",
@@ -247,11 +245,11 @@ The JSON format can be simplified in the case of a reponse to the GET method.
             }
         }
     }
-~~~~
+    ~~~~
 
 ### example: write
 
-~~~~
+    ~~~~
     {
         "fiap" : {
             "version" : "20140401",
@@ -273,48 +271,42 @@ The JSON format can be simplified in the case of a reponse to the GET method.
             }
         }
     }
-~~~~
+    ~~~~
 
 ## URL format
 
 It doesn't support all functions.
 It allows the requester to fetch a set of data by the GET method.
 
-### proposed schema name
-
-- igem (Internet Green Environment Messaging)
-- image (Internet Messaging for the Advanced Green Environment)
-- imase (Internet Messaging for the Advanced Smart Energy)
-
 ### query
 
-~~~~
-k=<point id>
-a=value or time
-    default: depends on the implementation.
-m=max or min
-    must be used with "a=".
-eq=
-    equal to.
-    must be used with "a=".
-ne=
-    not equal to.
-    must be used with "a=".
-lt=
-    less than.
-    must be used with "a=".
-gt=
-    greater than.
-    must be used with "a=".
-lteq=
-    less than or equal.
-    must be used with "a=".
-gteq=
-    greater than or equal.
-    must be used with "a=".
-e=
-    a session identifier.
-~~~~
+    ~~~~
+    k=<point id>
+    a=value or time
+        default: depends on the implementation.
+    m=max or min
+        must be used with "a=".
+    eq=
+        equal to.
+        must be used with "a=".
+    ne=
+        not equal to.
+        must be used with "a=".
+    lt=
+        less than.
+        must be used with "a=".
+    gt=
+        greater than.
+        must be used with "a=".
+    lteq=
+        less than or equal.
+        must be used with "a=".
+    gteq=
+        greater than or equal.
+        must be used with "a=".
+    e=
+        a session identifier.
+    ~~~~
 
 default: latest data.
 
@@ -323,13 +315,13 @@ default: latest data.
 it only allows to write a single key.
 "&" is used for a delimitter.
 
-~~~~
-k=<point id>
-v=<value spec>
-    <value spec> must be enclosed by a double quatation.  e.g. "26.5"
-    the value must not allowed to include both "&" and any double quatations.
-t=<time spec>
-~~~~
+    ~~~~
+    k=<point id>
+    v=<value spec>
+        <value spec> must be enclosed by a double quatation.  e.g. "26.5"
+        the value must not allowed to include both "&" and any double quatations.
+    t=<time spec>
+    ~~~~
 
 ### example
 
@@ -337,15 +329,15 @@ RFC 2396 format should be used.
 
 - fetch
 
-~~~~
-GET http://server.example.org/?k=igem://example.org/test/temperature&k=igem://example.org/test/humidity
-~~~~
+    ~~~~
+    GET http://server.example.org/?k=http://example.org/test/temperature&k=http://example.org/test/humidity
+    ~~~~
 
 - write
 
-~~~~
-GET http://server.example.org/?k=igem://example.org/test/temperature&v="26.5"&t=2014-11-21T07:55:00+0900
-~~~~
+    ~~~~
+    GET http://server.example.org/?k=http://example.org/test/temperature&v="26.5"&t=2014-11-21T07:55:00+0900
+    ~~~~
 
 ## method
 
@@ -379,4 +371,29 @@ nor to write multiple point ids.
 ### Other method
 
 TBD
+
+## schema name
+
+The representation of "Point ID" is like below:
+
+    ~~~~
+    http://example.org/home/device01/temperature
+    ~~~~
+
+It's just a string of the identifier of data stream.
+It's not a URL though it is likely to be.
+It sometimes disturbs for a developer to understand IEEE1888.
+
+When I introduce the version of GET method, the point IDs (it's just URI) are present in the URL.  It is awkward.
+
+In addition, "http" in the point ID is not a schema name of the URI.
+It breaks the intent of RFC 3968.
+
+So, we probably need a different name for the part of schema in the point ID.
+
+### idea: proposed schema name
+
+- igem (Internet Green Environment Messaging)
+- image (Internet Messaging for the Advanced Green Environment)
+- imase (Internet Messaging for the Advanced Smart Energy)
 
