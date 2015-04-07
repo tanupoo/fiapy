@@ -1,7 +1,7 @@
 {
     "security" : {
-        "key_file" : "cert/comp003-privkey.pem",
-        "cert_file" : "cert/comp003-signedcert.pem",
-        "ca_certs" : "cert/testCA-cert.pem"
+        "key_file" : "sample/cert/comp003-privkey.pem",
+        "cert_file" : "sample/cert/comp003-signedcert.pem",
+        "ca_certs" : "sample/cert/testCA-cert.pem"
     }
 }

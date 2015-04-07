@@ -1,8 +1,8 @@
 {
     "security": {
-        "key_file": "cert/comp001-privkey.pem",
-        "cert_file": "cert/comp001-signedcert.pem",
-        "ca_certs": "cert/testCA-cert.pem",
+        "key_file": "sample/cert/comp001-privkey.pem",
+        "cert_file": "sample/cert/comp001-signedcert.pem",
+        "ca_certs": "sample/cert/testCA-cert.pem",
 
         "acl" : {
             "gw001.hongo.test.gutp.jp": {
