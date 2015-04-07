@@ -7,7 +7,7 @@ The IEEE1888-2014 defines the XML format to represent the IEEE1888 data model.
 This memo defines another two formats.
 
     1) JSON format
-    2) URL format
+    2) URI format
 
 ## JSON format
 
@@ -273,7 +273,7 @@ The JSON format can be simplified in the case of a reponse to the GET method.
     }
     ~~~~
 
-## URL format
+## URI format
 
 It doesn't support all functions.
 It allows the requester to fetch a set of data by the GET method.
@@ -356,10 +356,10 @@ it supports simple IEEE1888 query method.
 it allows to fetch a set of data of a single point id,
 or to fetch a set of data of identical condition in each point ids.
 
-a requester sends a request by the URL format.
+a requester sends a request by the URI format.
 a responder responds data by JSON format.
 
-typically, a requester uses this method to fetch a latest data against a point id specified in the URL.
+typically, a requester uses this method to fetch a latest data against a point id specified in the URI.
 
 ### PUT
 
@@ -371,29 +371,4 @@ nor to write multiple point ids.
 ### Other method
 
 TBD
-
-## schema name
-
-The representation of "Point ID" is like below:
-
-    ~~~~
-    http://example.org/home/device01/temperature
-    ~~~~
-
-It's just a string of the identifier of data stream.
-It's not a URL though it is likely to be.
-It sometimes disturbs for a developer to understand IEEE1888.
-
-When I introduce the version of GET method, the point IDs (it's just URI) are present in the URL.  It is awkward.
-
-In addition, "http" in the point ID is not a schema name of the URI.
-It breaks the intent of RFC 3968.
-
-So, we probably need a different name for the part of schema in the point ID.
-
-### idea: proposed schema name
-
-- igem (Internet Green Environment Messaging)
-- image (Internet Messaging for the Advanced Green Environment)
-- imase (Internet Messaging for the Advanced Smart Energy)
 
