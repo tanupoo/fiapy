@@ -171,7 +171,8 @@ see testCA-privkey.pem.  it's encoded by PEM format.
 in order to create CSR by the openssl command,
 you have to create the configuration file for each component.
 creation comp001-req.conf and comp002-req.conf,
-please refer to the previous section.
+please refer to
+"create a configuration file of openssl" in the previous section.
 
 After getting the configuration files, you have to create CSR,
 generate the comp001's private key and CSR.
