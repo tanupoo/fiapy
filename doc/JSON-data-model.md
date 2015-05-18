@@ -310,6 +310,8 @@ It allows the requester to fetch a set of data by the GET method.
 
 default: latest data.
 
+NOTE: is it needed to specify the number of data ?
+
 ### write
 
 it only allows to write a single key.
