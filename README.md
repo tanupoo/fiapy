@@ -72,7 +72,7 @@ you have to specify the https scheme
 and pass the security configuration to the command like below.
 
 ~~~~
-% fiapClient.py -e https://fiap.example.org/storage -f fetch.json \
+% fiapc.py -e https://fiap.example.org/storage -f fetch.json \
     -c config.json
 ~~~~
 
