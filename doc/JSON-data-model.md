@@ -7,7 +7,7 @@ The IEEE1888-2014 defines the XML format to represent the IEEE1888 data model.
 This memo defines another two formats.
 
     1) JSON format
-    2) URI format
+    2) RESTful interface
 
 ## JSON format
 
@@ -273,7 +273,7 @@ The JSON format can be simplified in the case of a reponse to the GET method.
     }
     ~~~~
 
-## URI format
+## RESTful interface
 
 It doesn't support all functions.
 It allows the requester to fetch a set of data by the GET method.
@@ -385,10 +385,10 @@ it supports simple IEEE1888 query method.
 it allows to fetch a set of data of a single point id,
 or to fetch a set of data of identical condition in each point ids.
 
-a requester sends a request by the URI format.
+a requester sends a request to the RESTful interface.
 a responder responds data by JSON format.
 
-typically, a requester uses this method to fetch a latest data against a point id specified in the URI.
+typically, a requester uses this method to fetch a latest data against a point id.
 
 ### PUT
 
