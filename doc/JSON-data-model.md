@@ -278,51 +278,78 @@ The JSON format can be simplified in the case of a reponse to the GET method.
 It doesn't support all functions.
 It allows the requester to fetch a set of data by the GET method.
 
-### query
+### element
 
     ~~~~
     k=<point id>
-    a=value or time
-        default: depends on the implementation.
-    m=max or min
+        it must be specified one or more.
+    a=<0 or 1>
+        0: time
+        1: value
+    s=<0 or 1>
+        0: minimum
+        1: maximum
         must be used with "a=".
-    eq=
+    eq=<value>
         equal to.
         must be used with "a=".
-    ne=
+    ne=<value>
         not equal to.
         must be used with "a=".
-    lt=
+    lt=<value>
         less than.
         must be used with "a=".
-    gt=
+    gt=<value>
         greater than.
         must be used with "a=".
-    lteq=
+    lteq=<value>
         less than or equal.
         must be used with "a=".
-    gteq=
+    gteq=<value>
         greater than or equal.
         must be used with "a=".
-    e=
-        a session identifier.
+    i=<value>
+        the maximum number of data to be acquired.
     ~~~~
 
-default: latest data.
-
-NOTE: is it needed to specify the number of data ?
-
-### write
-
-it only allows to write a single key.
-"&" is used for a delimitter.
+the following elemets are for the write operation.
 
     ~~~~
-    k=<point id>
     v=<value spec>
         <value spec> must be enclosed by a double quatation.  e.g. "26.5"
         the value must not allowed to include both "&" and any double quatations.
     t=<time spec>
+    ~~~~
+
+### query operation
+
+- no conditions
+
+It returns the latest data of each point ID.
+Multiple point IDs can be specified.
+
+    ~~~~
+    k=<1st point id>[&k=<2nd point id>[...]]
+    ~~~~
+
+- with conditions
+
+It returns the data matching with the conditions.
+The conditions are applied to each key specified regardless of the order.
+
+    ~~~~
+    k=<point id>[&k=<[&a=<v or t>][&s=<max or min>][&...]
+    ~~~~
+
+### write operation
+
+It write data for the single key specified.
+Only one point ID must be specified.
+Multiple point IDs must not be specified.
+Any condition must not be specified.
+
+    ~~~~
+    k=<point id>&v=<value spec>&t=<time spec>
     ~~~~
 
 ### example
