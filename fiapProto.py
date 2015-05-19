@@ -104,6 +104,72 @@ class fiapProto():
     # parse keys in the GET request
     #
     def parseGETRequest(self, url_path):
+        qspec = {}
+        qspec['type'] = 'storage'
+        qspec['key'] = []
+        pids = []
+        conds = {}
+        #
+        # it doesn't need to always begin '?'.
+        #
+        for elm in url_path[2:].split('&'):
+            #
+            # XXX potentially, the injection attack could happen
+            # because the keys and some conditions are added
+            # into the query without check.
+            #
+            if elm.startswith('k=') == True:
+                pids.append(elm[2:])
+            elif elm.startswith('_=') == True:
+                pass
+            elif elm.startswith('a=') == True:
+                if elm[2:] == '0':
+                    conds['attrName'] = 'time'
+                elif elm[2:] == '1':
+                    conds['attrName'] = 'value'
+                else:
+                    self.emsg = 'invalid element [%s]' % elm
+                    return None
+            elif elm.startswith('s=') == True:
+                if elm[2:] == '0':
+                    conds['select'] = 'minimum'
+                elif elm[2:] == '1':
+                    conds['select'] = 'maximum'
+                else:
+                    self.emsg = 'invalid element [%s]' % elm
+                    return None
+            elif elm.startswith('i=') == True:
+                qspec['acceptableSize'] = elm[2:]
+            else:
+                cond_list = { 'eq=':'eq', 'ne=':'ne', 'lt=':'lt', 'gt=':'gt',
+                             'lteq=':'lteq', 'gteq=':'gteq' }
+                found = False
+                for k, v in cond_list.iteritems():
+                    if elm.startswith(k) == True:
+                        conds[v] = elm[len(k):]
+                        found = True
+                if found == False:
+                    self.emsg = 'invalid element [%s]' % elm
+                    return None
+        if len(pids) == 0:
+            self.emsg = 'no keys are specified'
+            return None
+        if self.debug > 0:
+            print 'DEBUG: pids=', pids
+            print 'DEBUG: conds=', conds
+        if len(conds) == 0:
+            conds = { 'attrName':'time', 'select':'maximum' }
+        for pid in pids:
+            qspec['key'].append({pid:conds})
+        req = {'fiap':{'version':_FIAPY_FIAP_VERSION,'queryRQ':qspec}}
+        if self.debug > 0:
+            print 'DEBUG: parsed getreq=', req
+        return self.serverParseJSON(json.dumps(req))
+
+    #
+    # parse keys in the GET request
+    #
+    def parseGETRequestOLD(self, url_path):
         pids = []
         for k in url_path[2:].split('&'):
             if k.startswith('k=') == True:
@@ -111,7 +177,7 @@ class fiapProto():
             elif k.startswith('_=') == True:
                 pass
             else:
-                self.emsg = 'invalid keyword, %s' % k
+                self.emsg = 'invalid element, %s' % k
                 return None
         if not pids:
             self.emsg = 'no keys are specified'
@@ -872,19 +938,19 @@ class fiapProto():
     #
     # check the acceptableSize and fix it if needed.
     # input: the value of acceptableSize
-    # output: value or _FIAPY_MAX_ACCEPTABLESIZE
+    # output: 1 or value or _FIAPY_MAX_ACCEPTABLESIZE
     #
     def _getQueryAcceptableSize(self, j_query):
         v_limit = j_query.get('acceptableSize')
         if v_limit == None:
             if self.debug > 0:
-                print 'DEBUG: no acceptableSize is specified. set %d' % _FIAPY_MAX_ACCEPTABLESIZE
-            return _FIAPY_MAX_ACCEPTABLESIZE      
+                print 'DEBUG: no acceptableSize is specified. set %d' % 1
+            return 1
         try:
             v_limit = int(v_limit)
         except Exception as e:
             print 'ERROR: acceptableSize is not a number. ignored and set %d' % _FIAPY_MAX_ACCEPTABLESIZE
-            return _FIAPY_MAX_ACCEPTABLESIZE      
+            return _FIAPY_MAX_ACCEPTABLESIZE
         if v_limit == 0:
             print 'ERROR: acceptableSize must not be zero. ignored and set %d' % _FIAPY_MAX_ACCEPTABLESIZE
             return _FIAPY_MAX_ACCEPTABLESIZE
@@ -1061,7 +1127,7 @@ class fiapProto():
                 elif op == 'minimum':
                     key['op'] = 'min'
                 elif op != None:
-                    self.emsg = 'unkown value in select is specified. [%s]' % op
+                    self.emsg = 'unknown value in select is specified. [%s]' % op
                     return None
                 #
                 # trap
@@ -1071,7 +1137,7 @@ class fiapProto():
                 if a == 'changed':
                     key['trap'] = True
                 elif a != None:
-                    self.emsg = 'unkown value of select is specified. [%s]' % self._tostring(vals)
+                    self.emsg = 'unknown value of select is specified. [%s]' % self._tostring(vals)
                     return None
                 keys.append( key )
         return keys
@@ -1117,7 +1183,7 @@ class fiapProto():
             elif a == 'minimum':
                 key['op'] = 'min'
             elif a != None:
-                self.emsg = 'unkown value of select is specified. [%s]' % a
+                self.emsg = 'unknown value of select is specified. [%s]' % a
                 return None
             #
             # make a condition.
@@ -1139,7 +1205,7 @@ class fiapProto():
             if a == 'changed':
                 key['trap'] = True
             elif a != None:
-                self.emsg = 'unkown value of select is specified. [%s]' % self._tostring(e_key)
+                self.emsg = 'unknown value of select is specified. [%s]' % self._tostring(e_key)
                 return None
             keys.append( key )
         return keys
