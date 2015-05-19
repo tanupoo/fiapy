@@ -138,13 +138,13 @@ class fiapMongo():
         cursor = self.db[pid]
         op = key.get('op')
         if op == 'max':
-            cursor = cursor.find(cond, limit=1).sort(key['an'],pymongo.DESCENDING)
+            cursor = cursor.find(cond, limit=k_limit).sort(key['an'],pymongo.DESCENDING)
             key['total'] = 1
             key['rest'] = 0
             key['next'] = 0
             return cursor
         elif op == 'min':
-            cursor = cursor.find(cond, limit=1).sort(key['an'],pymongo.ASCENDING)
+            cursor = cursor.find(cond, limit=k_limit).sort(key['an'],pymongo.ASCENDING)
             key['total'] = 1
             key['rest'] = 0
             key['next'] = 0
