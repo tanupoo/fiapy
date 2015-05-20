@@ -13,9 +13,9 @@ REGISTER and LOOKUP are not supported.
 
 Experimentaly, it supports:
 
-- the JSON format.
+- JSON format.
 - translation between XML and JSON, vice versa.
-- GET method.
+- RESTful interface.
 
 For more detail about this features,
 see [JSON-data-model.md](https://github.com/tanupoo/fiapy/blob/master/doc/JSON-data-model.md)
