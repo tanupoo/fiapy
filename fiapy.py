@@ -155,7 +155,7 @@ class fiapHandler(BaseHTTPRequestHandler):
     def do_PUT(self):
         if self._check_request() == False:
             return
-        msg = 'POST is not allowed.'
+        msg = 'PUT is not allowed.'
         self.log_message(msg)
         self.send_error(405, msg)
         return
