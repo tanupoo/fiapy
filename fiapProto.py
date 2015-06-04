@@ -15,7 +15,7 @@ import uuid
 
 _FIAPY_FIAP_VERSION = '20140401'
 _FIAPY_MONGODB = { 'port': 27036 }
-_FIAPY_MAX_ACCEPTABLESIZE = 10
+_FIAPY_MAX_ACCEPTABLESIZE = 512
 _FIAPY_WSDL = './fiapy.wsdl'
 _FIAPY_SERVICE_PORT = 'http://133.11.168.118:18880/' # XXX should be picked dynamically.
 _FIAPY_PRINT_TIMEZONE = 'Asia/Tokyo'
@@ -290,6 +290,8 @@ class fiapProto():
                     j_value.append({ 'time' : fixed_dt.strftime('%Y-%m-%dT%H:%M:%S%z'), 'value' : i['value'] })
                     k['result'] += 1
                     total += 1
+                if len(j_value) == 0:
+                    j_value.append({ 'time' : '1970-01-01T00:00:00Z', 'value' : 0 })
                 j_plist.append({ k['pid'] : j_value })
                 if k['next'] != 0:
                     k['query']['cursor'] = k['next']
@@ -944,16 +946,16 @@ class fiapProto():
         v_limit = j_query.get('acceptableSize')
         if v_limit == None:
             if self.debug > 0:
-                print 'DEBUG: no acceptableSize is specified. set %d' % 1
+                print 'DEBUG: no acceptableSize is specified. set to 1'
             return 1
         try:
             v_limit = int(v_limit)
         except Exception as e:
-            print 'ERROR: acceptableSize is not a number. ignored and set %d' % _FIAPY_MAX_ACCEPTABLESIZE
-            return _FIAPY_MAX_ACCEPTABLESIZE
+            print 'ERROR: acceptableSize is not a number. ignored and set to 1'
+            return 1
         if v_limit == 0:
-            print 'ERROR: acceptableSize must not be zero. ignored and set %d' % _FIAPY_MAX_ACCEPTABLESIZE
-            return _FIAPY_MAX_ACCEPTABLESIZE
+            print 'ERROR: acceptableSize must not be zero. ignored and set to 1'
+            return 1
         elif v_limit > _FIAPY_MAX_ACCEPTABLESIZE:
             print 'ERROR: acceptableSize must be less or equal to %d, but %d. ignored.' % (_FIAPY_MAX_ACCEPTABLESIZE, v_limit)
             return _FIAPY_MAX_ACCEPTABLESIZE
