@@ -89,7 +89,6 @@ you have to use the mongodb if you use the IEEE1888 server.
 ### python modules
 
 the following modules are required.  almost modules are installed with the core module.
-dateutil, pytz and pymongo are probably needed to be intalled.
 
     ~~~~
     Base64
@@ -97,7 +96,7 @@ dateutil, pytz and pymongo are probably needed to be intalled.
     SocketServer
     argparse
     bson
-    dateutil
+    python-dateutil
     hmac
     httplib2
     json
@@ -107,6 +106,12 @@ dateutil, pytz and pymongo are probably needed to be intalled.
     rfc822
     urlparse
     uuid
+    ~~~~
+
+python-dateutil, pytz and pymongo are probably needed to be intalled.
+
+    ~~~~
+    % sudo easy_install pymongo
     ~~~~
 
     **TO BE CHECKED**: it probably includes the modules for urllib.
