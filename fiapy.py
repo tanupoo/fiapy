@@ -97,7 +97,8 @@ class fiapHandler(BaseHTTPRequestHandler):
         if opt.sec_lv and self._check_acl_san() == False:
             self.send_error(401)
             return
-        fiap = fiapProto.fiapProto(requester_address=self.client_address, strict_check=True, debug=cf.debug)
+        fiap = fiapProto.fiapProto(requester_address=self.client_address,
+                                   strict_check=True, tzname=cf.tzname, debug=cf.debug)
         if self.clen == -1 and False:
             #
             # XXX GUTP interop hack: accept in case of no content-length.
@@ -138,7 +139,7 @@ class fiapHandler(BaseHTTPRequestHandler):
             self._send_response(doc, 'text/xml; charset=utf-8')
             return
         elif self.path.startswith('/?'):
-            fiap = fiapProto.fiapProto(strict_check=True, debug=cf.debug)
+            fiap = fiapProto.fiapProto(strict_check=True, tzname=self.tzname, debug=cf.debug)
             doc = fiap.parseGETRequest(self.path)
             if doc == None:
                 self.log_message('ERROR: %s' % fiap.getemsg())
@@ -213,6 +214,8 @@ def parse_args():
         help='specify to use TLS connection. 0, 1, or 2')
     p.add_argument('-c', action='store', dest='cfile', default=False,
         help='specify the file name of the configuration.')
+    p.add_argument('-z', action='store', dest='tzname', default='Asia/Tokyo',
+        help='specify the name of default timezone. ')
     p.add_argument('-d', action='store', dest='debug', default=0,
         help='specify the debug level. 0, 1, or 2')
     opt = p.parse_args()
@@ -222,7 +225,8 @@ def parse_args():
 # main
 #
 opt = parse_args()
-cf = fiapConfig.fiapConfig(opt.cfile, security_level=opt.sec_lv, debug=opt.debug)
+cf = fiapConfig.fiapConfig(opt.cfile, security_level=opt.sec_lv,
+                           tzname=opt.tzname, debug=opt.debug)
 #
 # set the runner and default port if needed.
 #

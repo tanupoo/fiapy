@@ -4,7 +4,7 @@
 from pymongo import MongoClient
 import pymongo
 import dateutil.parser
-import pytz
+import dateutil.tz
 
 class fiapMongoException():
     def __init__(self, value):
@@ -24,7 +24,10 @@ class fiapMongo():
     # insert a chunk of data.
     #
     # input: point list and the chunk
-    #      = [ { <point id> : [ { 'time': time, 'value' : value }, {...} ] }, {...} ]
+    #      = { '<point id1>' : [ { 'time': time, 'value' : value },
+    #                            {...}, {...}, ... ]
+    #          '<point id2>' : [ {...}, {...}, ... ],
+    #          ... }
     # output: the number of the data recorded.
     #
     def insertPointChunk(self, pchunk):
@@ -139,7 +142,7 @@ class fiapMongo():
         op = key.get('op')
         if op == 'max':
             cursor = cursor.find(cond, limit=k_limit).sort(key['an'],pymongo.DESCENDING)
-            key['total'] = 1
+            key['total'] = 1    # XXX TODO it should be taken from the actual length of the cursor.
             key['rest'] = 0
             key['next'] = 0
             return cursor
@@ -172,14 +175,14 @@ class fiapMongo():
 # output: a string for javascript time comparison.
 #
 def getKeyCondTime(timestr, op):
-    fmt_isodate = 'ISODate("%Y-%m-%dT%H:%M:%SZ")'
+    fmt_isodate = 'ISODate("%Y-%m-%dT%H:%M:%S.%fZ")'
     if len(timestr) == 0:
         raise fiapMongoException('null time string is specified.')
     try:
         dt = dateutil.parser.parse(timestr)
     except Exception as et:
         raise fiapMongoException('invalid time string (%s)' % et)
-    return ' this.time %s %s' % (op, dt.astimezone(pytz.timezone('UTC')).strftime(fmt_isodate))
+    return ' this.time %s %s' % (op, dt.astimezone(dateutil.tz.getutc()).strftime(fmt_isodate))
 
 #
 # dummy

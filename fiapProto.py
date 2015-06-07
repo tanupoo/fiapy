@@ -8,7 +8,6 @@ from xml.etree.ElementTree import tostring
 from xml.etree.ElementTree import Element
 from xml.etree import ElementTree
 from datetime import datetime
-import pytz
 import copy
 import json
 import uuid
@@ -18,7 +17,8 @@ _FIAPY_MONGODB = { 'port': 27036 }
 _FIAPY_MAX_ACCEPTABLESIZE = 512
 _FIAPY_WSDL = './fiapy.wsdl'
 _FIAPY_SERVICE_PORT = 'http://133.11.168.118:18880/' # XXX should be picked dynamically.
-_FIAPY_PRINT_TIMEZONE = 'Asia/Tokyo'
+_FIAPY_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
+_FIAPY_PRINT_TZNAME = 'Asia/Tokyo'
 _FIAPY_MAX_TRAPTTL = 3600 # 1 hour
 
 _HTTP_CODE_OK = '200' # OK
@@ -49,12 +49,13 @@ _NSMAP = {
 
 class fiapProto():
 
-    def __init__(self, requester_address=None, requester_san=None, timezone=_FIAPY_PRINT_TIMEZONE, strict_check=False, debug=0):
+    def __init__(self, requester_address=None, requester_san=None,
+                 tzname=_FIAPY_PRINT_TZNAME, strict_check=False, debug=0):
         self._initmsg()
         self.wsdl = None
         self.requester_address = requester_address
         self.requester_san = requester_san
-        self.timezone = timezone
+        self.tzname = tzname
         self.strict_check = strict_check
         self.debug = debug
         #
@@ -281,13 +282,19 @@ class fiapProto():
                     self.emsg = '%s (%s)' % (_FIAPY_EMSG_INTERNAL_ACCESS_DATA, et)
                     self._setJSONResponse(_FIAP_METHOD_QUERYRS, _HTTP_CODE_INTERNAL_ERROR, self.emsg)
                     return self.doc
+                #
+                # do fetch data.
+                #
                 j_value = []
                 for i in cursor:
                     if isinstance(i['time'], datetime) == False:
                         print 'ERROR: invalid time data in the database. %s (type=%s). ignored.' % (i['time'], str(type(i['time'])))
                         continue
-                    fixed_dt = datetime_naive_to_aware(i['time'])
-                    j_value.append({ 'time' : fixed_dt.strftime('%Y-%m-%dT%H:%M:%S%z'), 'value' : i['value'] })
+                    fixed_dt = datetime_naive_to_aware(i['time'], self.tzname)
+                    fixed_dt = fixed_dt.astimezone(dateutil.tz.gettz(self.tzname))
+                    j_value.append({
+                        'time' : fixed_dt.strftime(_FIAPY_DATETIME_FORMAT),
+                        'value' : i['value'] })
                     k['result'] += 1
                     total += 1
                 if len(j_value) == 0:
@@ -361,7 +368,7 @@ class fiapProto():
                     self.emsg = 'a json key, time is not specified. (%s)' % self._tostring(i[pid])
                     self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
                     return False
-                t = getutc(v['time'])
+                t = fix_to_utc(v['time'], self.tzname)
                 if t == None:
                     self.emsg = 'invalid time string is found. (%s)' % v['time']
                     self._setJSONResponse(_FIAP_METHOD_DATARS, _HTTP_CODE_BAD_REQUEST, self.emsg)
@@ -480,7 +487,7 @@ class fiapProto():
                     if t == None or v == None:
                         print 'ERROR: time or value are not specified. [%s]' % vs
                         return None
-                    dt = getutc(t)
+                    dt = fix_to_utc(t, self.tzname)
                     e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : dt.strftime('%Y-%m-%dT%H:%M:%S%z') } )
                     e_value.text = v
         return e_newroot
@@ -503,7 +510,7 @@ class fiapProto():
                     print 'ERROR: time or value are not specified. [%s]' % vs
                     self.emsg = 'time or value are not specified. [%s]' % v
                     return None
-                dt = getutc(t)
+                dt = fix_to_utc(t, self.tzname)
                 e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : dt.strftime('%Y-%m-%dT%H:%M:%S%z') } )
                 e_value.text = v
         return e_newroot
@@ -720,7 +727,7 @@ class fiapProto():
                 return None
             if j_point.get(pid) == None:
                 j_point[pid] = []
-            tstr = datetime.isoformat(t.astimezone(pytz.timezone(self.timezone)))
+            tstr = datetime.isoformat(t.astimezone(dateutil.tz.gettz(self.tzname)))
             j_point[pid].append({'time':tstr, 'value':v})
         return j_point
 
@@ -855,7 +862,7 @@ class fiapProto():
                     if isinstance(i['time'], datetime) == False:
                         print 'ERROR: invalid time data in the database. %s (type=%s). ignored.' % (i['time'], str(type(i['time'])))
                         continue
-                    fixed_dt = datetime_naive_to_aware(i['time'])
+                    fixed_dt = datetime_naive_to_aware(i['time'], self.tzname)
                     e_point = ElementTree.SubElement(e_body, '{%s}point' % NS_FIAP, {'id': k['pid']})
                     e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : fixed_dt.strftime('%Y-%m-%dT%H:%M:%S%z') } )
                     e_value.text = i['value']
@@ -891,9 +898,8 @@ class fiapProto():
         if ttl == 0:
             req['tte'] = 0
         else:
-            dt = datetime.now(pytz.timezone(self.timezone)) + timedelta(seconds=ttl)
-            dt.astimezone(pytz.timezone('UTC'))
-            req['tte'] = dt
+            dt = datetime.now(dateutil.tz.gettz(self.tzname)) + timedelta(seconds=ttl)
+            req['tte'] = dt.astimezone(dateutil.tz.tzutc())
         iter_keys = e_query.iterfind('./fiap:key', namespaces=_NSMAP)
         req['qk'] = self._getKey_XMLList(iter_keys)
         if req['qk'] == None:
@@ -1270,7 +1276,7 @@ class fiapProto():
             if len(timestr) == 0:
                 self.emsg = 'null time is specified in the value element. [%s]' % self._tostring(e_value)
                 return []
-            utc = getutc(timestr)
+            utc = fix_to_utc(timestr, self.tzname)
             if utc == None:
                 self.emsg = 'invalid time string (%s)' % timestr
                 return []
@@ -1320,34 +1326,36 @@ def print_exception(et):
 # fiap functions
 #
 
-#
-# print a ptv list.
-# input: { 'pid':<point id>, 'time':<time>, 'value':<value> }
-#     tzstr is a string of a timezone such as 'UTC', 'Asia/Tokyo'
-#
-def print_points(pset, tzstr='UTC'):
-    for i in pset:
-        tstr = datetime.isoformat(i['time'].astimezone(pytz.timezone(tzstr)))
-        print 'point id="%s" time="%s" value="%s"' % (i['pid'], tstr, i['value'])
+# #
+# # print a ptv list.
+# # input: { 'pid':<point id>, 'time':<time>, 'value':<value> }
+# #     tzstr is a string of a timezone such as 'UTC', 'Asia/Tokyo'
+# #
+# def print_points(pset, tzstr='UTC'):
+#     for i in pset:
+#         tstr = datetime.isoformat(i['time'].astimezone(dateutil.tz.gettz(tzstr)))
+#         print 'point id="%s" time="%s" value="%s"' % (i['pid'], tstr, i['value'])
 
 #
+# if the string looks a naive datetime string, replace to self.tzname.
+# and it returns in UTC.
+#
 # input: datetime string
-#        if the string looks a naive datetime string, replace to UTC.
 #
 # output: datetime object in UTC
-#
-def getutc(dtstr):
+
+def fix_to_utc(dtstr, tzname):
     try:
         dt = dateutil.parser.parse(dtstr)
-        d = datetime_naive_to_aware(dt)
-        d = dt.astimezone(pytz.timezone('UTC'))
+        dt = datetime_naive_to_aware(dt, tzname)
+        dt = dt.astimezone(dateutil.tz.tzutc())
     except Exception as et:
         print_exception(et)
         return None
-    return d
+    return dt
 
-def datetime_naive_to_aware(dt):
-    if dt.tzinfo == None:
-        return dt.replace(tzinfo=pytz.UTC)
+def datetime_naive_to_aware(dt, tzname):
+    if dt.tzinfo == None or dt.tzinfo.utcoffset(dt) == None:
+        return dt.replace(tzinfo=dateutil.tz.gettz(tzname))
     return dt
 

@@ -122,6 +122,20 @@ this version requires mongodb as the backend database.
 you need to configure properly and prepare the port number for the mongodb server.
 you have to specify the port number when you launch fiapy.py.
 
+### timezone
+
+Since Mongodb doesn't support timezone for ISODate(),
+any datetime objects are removed the timezone and become naive.
+So, fiapy looks upon any data in the Mongodb as in UTC.
+
+If you put a time attribute with a timezone, fiapy converts it in UTC before storing the data into Mongodb.
+If you put a time attribute without any timezone, fiapy considers it in the timezone you defined
+when you had launched fiapy.
+The timezone in the response from fiapy is always converted into the timezone you specified as well.
+See the options of fiapy.
+
+You should consider to convert it into your timezone when you see it on your browswer.
+
 ## TODO
 
 - documentation.
