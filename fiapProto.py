@@ -657,7 +657,7 @@ class fiapProto():
         pset_all = self._parseXMLPointClass(e_root)
         if len(pset_all) == 0:
             self.doc = { _FIAP_METHOD_DATARQ : { } }
-            self.emsg = 'There is No Point in the object.'
+            self.emsg = 'There is no Point in the object.'
             return self.doc
         #
         # translate XML data request into JSON
@@ -1025,7 +1025,7 @@ class fiapProto():
         e_root, e_header, e_body = self.getNewXMLdoc(_FIAP_METHOD_DATARS)
         #
         if len(pset_all) == 0:
-            self.emsg = 'There is No Point in the object.'
+            self.emsg = 'There is no Point in the object.'
             self._getErrorObject(e_header, 'error', self.emsg)
             return None
         else:
