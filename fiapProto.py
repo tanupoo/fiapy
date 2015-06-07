@@ -857,33 +857,32 @@ class fiapProto():
                 except fiapMongo.fiapMongoException as et:
                     self.emsg = '%s (%s)' % (_FIAPY_EMSG_INTERNAL_ACCESS_DATA, et)
                     self._getErrorObject(e_header, 'error', self.emsg)
-                    return None
-                for i in cursor:
-                    if isinstance(i['time'], datetime) == False:
-                        print 'ERROR: invalid time data in the database. %s (type=%s). ignored.' % (i['time'], str(type(i['time'])))
-                        continue
-                    fixed_dt = datetime_naive_to_aware(i['time'], self.tzname)
-                    e_point = ElementTree.SubElement(e_body, '{%s}point' % NS_FIAP, {'id': k['pid']})
-                    e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : fixed_dt.strftime('%Y-%m-%dT%H:%M:%S%z') } )
-                    e_value.text = i['value']
-                    k['result'] += 1
-                    if k['next'] != 0:
-                        k['query'].set('cursor', str(k['next']))
-                    e_rquery.append(k['query'])
-                total += k['result']
+                else:
+                    for i in cursor:
+                        if isinstance(i['time'], datetime) == False:
+                            print 'ERROR: invalid time data in the database. %s (type=%s). ignored.' % (i['time'], str(type(i['time'])))
+                            continue
+                        fixed_dt = datetime_naive_to_aware(i['time'], self.tzname)
+                        e_point = ElementTree.SubElement(e_body, '{%s}point' % NS_FIAP, {'id': k['pid']})
+                        e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : fixed_dt.strftime('%Y-%m-%dT%H:%M:%S%z') } )
+                        e_value.text = i['value']
+                        k['result'] += 1
+                        if k['next'] != 0:
+                            k['query'].set('cursor', str(k['next']))
+                        e_rquery.append(k['query'])
+                    total += k['result']
             if self.debug > 0:
                 for k in keys:
                     print 'DEBUG: search key =', k
         except fiapMongo.fiapMongoException as et:
             self.emsg = 'An error occured when it accesses to the DB. (%s)' % et
             self._getErrorObject(e_header, 'error', self.emsg)
-            return None
         #
         if total == 0:
             self.emsg = 'There is no matched point for the query.'
             self._getErrorObject(e_header, 'error', self.emsg)
-            return self.doc
-        ElementTree.SubElement(e_header, '{%s}OK' % NS_FIAP)
+        else:
+            ElementTree.SubElement(e_header, '{%s}OK' % NS_FIAP)
         self.doc = self.getXMLdoc(e_newroot)
         return self.doc
 
@@ -933,14 +932,12 @@ class fiapProto():
             except:
                 self.emsg = '%s (%s)' % (_FIAPY_EMSG_INTERNAL_ACCESS_DATA, et)
                 self._getErrorObject(e_header, 'error', self.emsg)
-                return None
         except fiapMongo.fiapMongoException as et:
             self.emsg = 'An error occured when it accesses to the DB. (%s)' % et
             self._getErrorObject(e_header, 'error', self.emsg)
-            return None
-        ElementTree.SubElement(e_header, '{%s}OK' % NS_FIAP)
+        else:
+            ElementTree.SubElement(e_header, '{%s}OK' % NS_FIAP)
         self.doc = self.getXMLdoc(e_newroot)
-
         return self.doc
 
     #
@@ -994,6 +991,10 @@ class fiapProto():
     #
     def _serverParseXML_DataRQ(self, e_root, e_header, e_body):
         #
+        # response to data request in XML
+        #
+        e_root, e_header, e_body = self.getNewXMLdoc(_FIAP_METHOD_DATARS)
+        #
         # prepare an interface for MongoDB 
         #
         try:
@@ -1018,16 +1019,10 @@ class fiapProto():
         except fiapMongo.fiapMongoException as et:
             self.emsg = 'An error occured when it accesses to the DB. (%s)' % et
             self._getErrorObject(e_header, 'error', self.emsg)
-            return None
-        #
-        # response to data request in XML
-        #
-        e_root, e_header, e_body = self.getNewXMLdoc(_FIAP_METHOD_DATARS)
         #
         if len(pset_all) == 0:
             self.emsg = 'There is no Point in the object.'
             self._getErrorObject(e_header, 'error', self.emsg)
-            return None
         else:
             self.emsg = ''
             ElementTree.SubElement(e_header, '{%s}OK' % NS_FIAP)
