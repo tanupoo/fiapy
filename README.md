@@ -88,7 +88,7 @@ you have to use the mongodb if you use the IEEE1888 server.
 
 ### python modules
 
-the following modules are required.  almost modules are installed with the core module.
+the following modules are required.  most modules are installed in the python core module.
 
     ~~~~
     Base64
@@ -108,13 +108,22 @@ the following modules are required.  almost modules are installed with the core 
     uuid
     ~~~~
 
-python-dateutil, pytz and pymongo are probably needed to be intalled.
+the following modules are needed to be installed.
+
+    ~~~~
+    Base64
+    bson
+    python-dateutil
+    httplib2
+    pymongo
+    pytz
+    ~~~~
+
+one example for python module installation is like below:
 
     ~~~~
     % sudo easy_install pymongo
     ~~~~
-
-    **TO BE CHECKED**: it probably includes the modules for urllib.
 
 ### mongodb
 
