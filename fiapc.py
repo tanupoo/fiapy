@@ -150,7 +150,7 @@ def parse_args():
     p.add_argument('-f', action='store', dest='bfile', default=None,
         help='specify the filename of the request.')
     p.add_argument('-c', action='store', dest='cfile', default=None,
-        help='specify the file name of the configuration.')
+        help='specify the configuration file name.')
     p.add_argument('-x', action='store_true', dest='req_to_xml', default=False,
         help='specify to send an XML request.')
     p.add_argument('-X', action='store_true', dest='res_to_xml', default=False,
@@ -171,11 +171,11 @@ if opt.url.startswith('https://'):
     sec_lv = 1
 sec_lv = opt.sec_lv
 url, host = set_default_port(opt.url)
-if opt.debug >= 1:
-    print 'DEBUG: connect to', host
 
 #soapGetAddressLocation(opt.wsdl)
 
+if opt.debug:
+    print 'DEBUG: reading request file.'
 if opt.bfile != None:
     fp = open(opt.bfile)
 else:
@@ -217,6 +217,8 @@ cf = fiapConfig.fiapConfig(opt.cfile, security_level=sec_lv, debug=opt.debug)
 #
 # send the request and get a response.
 #
+if opt.debug >= 1:
+    print 'DEBUG: connecting to', host
 res = postrequest(url, body=req_doc, ctype=ctype, config=cf)
 if res == None:
     print 'ERROR(FIAP): ' + fiap.emsg
