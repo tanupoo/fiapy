@@ -194,13 +194,14 @@ def run(port=18880, config=None):
     # start the server
     #
     try:
+        print 'INFO: starting on %s' % port
         server.serve_forever()
     except KeyboardInterrupt:
         print '^C received, shutting down the web server'
     except Exception as e:
         print 'ERROR: ', e.message, str(type(e))
     finally:
-        print 'cleaning'
+        print 'INFO: shutting down'
         server.socket.close()
 
 #
