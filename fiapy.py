@@ -41,8 +41,13 @@ class fiapHandler(BaseHTTPRequestHandler):
         # check the content-length
         #
         self.clen = -1
+        #
+        # XXX need to use chunkable_http_server.py
+        #
         if self.headers.getheader('Transfer-Encoding') == 'chunked':
-            # XXX here possible DOS happen.
+            #
+            # XXX need to use the try close and log if error.
+            #
             self.clen = self.rfile.readline()
             self.clen = int(self.clen, 16)
         else:
