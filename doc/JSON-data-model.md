@@ -275,8 +275,15 @@ The JSON format can be simplified in the case of a reponse to the GET method.
 
 ## RESTful interface
 
-It doesn't support all functions.
-It allows the requester to fetch a set of data by the GET method.
+It is not intended to support all protocols of IEEE1888.
+
+Supported protocols are:
+
+- FETCH protocol with multiple point IDs, but without any attributes.
+- FETCH protocol with a single point IDs, multiple attributes.
+- WRITE protocol with a single point IDs.
+
+Other protocols and values should be considered later.
 
 ### element
 
@@ -365,10 +372,12 @@ RFC 2396 format should be used.
 - write
 
     ~~~~
-    GET http://server.example.org/?k=http://example.org/test/temperature&v="26.5"&t=2014-11-21T07:55:00+0900
+    PUT http://server.example.org/?k=http://example.org/test/temperature&v="26.5"&t=2014-11-21T07:55:00+0900
     ~~~~
 
 ## method
+
+*Right now, fiapc.py implementation does use GET for IEEE1888 WRITE protocol.*
 
 ### POST
 
