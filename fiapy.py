@@ -218,7 +218,7 @@ def parse_args():
         help='specify the port number for this server.')
     p.add_argument('-s', action='store', dest='sec_lv', default=0,
         help='specify to use TLS connection. 0, 1, or 2')
-    p.add_argument('-c', action='store', dest='cfile', default=False,
+    p.add_argument('-c', action='store', dest='cfile', default=None,
         help='specify the file name of the configuration.')
     p.add_argument('-z', action='store', dest='tzname', default='Asia/Tokyo',
         help='specify the name of default timezone. ')
