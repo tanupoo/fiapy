@@ -102,8 +102,8 @@ class fiapHandler(BaseHTTPRequestHandler):
         if opt.sec_lv and self._check_acl_san() == False:
             self.send_error(401)
             return
-        fiap = fiapProto.fiapProto(requester_address=self.client_address,
-                                   strict_check=True, tzname=cf.tzname, debug=cf.debug)
+        fiap = fiapProto.fiapProto(cf, requester_address=self.client_address,
+                                   strict_check=True, debug=cf.debug)
         if self.clen == -1 and False:
             #
             # XXX GUTP interop hack: accept in case of no content-length.
@@ -232,7 +232,7 @@ def parse_args():
 #
 opt = parse_args()
 cf = fiapConfig.fiapConfig(opt.cfile, security_level=opt.sec_lv,
-                           tzname=opt.tzname, debug=opt.debug)
+                           debug=opt.debug)
 #
 # set the runner and default port if needed.
 #

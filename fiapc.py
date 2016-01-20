@@ -185,7 +185,7 @@ if src == None:
     print 'ERROR: src document is nothing'
     exit(1)
 
-fiap = fiapProto.fiapProto(debug=opt.debug)
+fiap = fiapProto.fiapProto(opt.cfile, debug=opt.debug)
 
 #
 # make a request
