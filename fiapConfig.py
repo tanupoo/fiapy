@@ -15,9 +15,9 @@ class fiapConfig():
     security_level = False
     acl = None
     acl_san_wildcard = None
-    tzname = None
+    tzname = 'Asia/Tokyo'   # default
 
-    def __init__(self, cfile, security_level=0, tzname='Asia/Tokyo', debug=0):
+    def __init__(self, cfile, security_level=0, debug=0):
         self.security_level = security_level
         self.debug = debug
         if cfile:
