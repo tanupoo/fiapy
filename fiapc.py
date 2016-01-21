@@ -174,6 +174,11 @@ url, host = set_default_port(opt.url)
 
 #soapGetAddressLocation(opt.wsdl)
 
+#
+# parse the configuration file if specified.
+#
+cf = fiapConfig.fiapConfig(opt.cfile, security_level=sec_lv, debug=opt.debug)
+
 if opt.debug:
     print 'DEBUG: reading request file.'
 if opt.bfile != None:
@@ -185,7 +190,7 @@ if src == None:
     print 'ERROR: src document is nothing'
     exit(1)
 
-fiap = fiapProto.fiapProto(opt.cfile, debug=opt.debug)
+fiap = fiapProto.fiapProto(cf, debug=opt.debug)
 
 #
 # make a request
@@ -210,10 +215,6 @@ if req_doc == None:
 if opt.debug >= 1:
     print 'DEBUG: Request:', req_doc
 
-#
-# parse the configuration file if specified.
-#
-cf = fiapConfig.fiapConfig(opt.cfile, security_level=sec_lv, debug=opt.debug)
 #
 # send the request and get a response.
 #
