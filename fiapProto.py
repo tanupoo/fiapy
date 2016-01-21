@@ -16,7 +16,8 @@ _FIAPY_FIAP_VERSION = '20140401'
 _FIAPY_MONGODB = { 'port': 27036 }
 _FIAPY_MAX_ACCEPTABLESIZE = 512
 _FIAPY_WSDL = './fiapy.wsdl'
-_FIAPY_SERVICE_PORT = 'http://133.11.168.118:18880/' # XXX should be picked dynamically.
+# XXX should be picked dynamically.
+_FIAPY_SERVICE_PORT = 'http://192.168.11.7:18880/'
 _FIAPY_DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f%z'
 _FIAPY_MAX_TRAPTTL = 3600 # 1 hour
 
@@ -510,7 +511,11 @@ class fiapProto():
                     self.emsg = 'time or value are not specified. [%s]' % v
                     return None
                 dt = fix_to_utc(t, self.jc.tzname)
-                e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : dt.strftime('%Y-%m-%dT%H:%M:%S%z') } )
+                time_str = dt.strftime('%Y-%m-%dT%H:%M:%S%z')
+                time_str = time_str.replace('+0000', '+00:00')
+                e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP,
+                                                 {'time' : time_str } )
+                #e_value = ElementTree.SubElement(e_point, '{%s}value' % NS_FIAP, {'time' : dt.strftime('%Y-%m-%dT%H:%M:%S%z') } )
                 e_value.text = v
         return e_newroot
 
@@ -990,10 +995,6 @@ class fiapProto():
     #
     def _serverParseXML_DataRQ(self, e_root, e_header, e_body):
         #
-        # response to data request in XML
-        #
-        e_root, e_header, e_body = self.getNewXMLdoc(_FIAP_METHOD_DATARS)
-        #
         # prepare an interface for MongoDB 
         #
         try:
@@ -1018,6 +1019,10 @@ class fiapProto():
         except fiapMongo.fiapMongoException as et:
             self.emsg = 'An error occured when it accesses to the DB. (%s)' % et
             self._getErrorObject(e_header, 'error', self.emsg)
+        #
+        # response to data request in XML
+        #
+        e_root, e_header, e_body = self.getNewXMLdoc(_FIAP_METHOD_DATARS)
         #
         if len(pset_all) == 0:
             self.emsg = 'There is no Point in the object.'
