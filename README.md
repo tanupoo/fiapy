@@ -111,12 +111,9 @@ the following modules are required.  most modules are installed in the python co
 the following modules are needed to be installed.
 
     ~~~~
-    Base64
-    bson
+    pymongo
     python-dateutil
     httplib2
-    pymongo
-    pytz
     ~~~~
 
 one example for python module installation is like below:
