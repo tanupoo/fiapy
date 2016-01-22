@@ -63,7 +63,7 @@ TBD.
 
     <query spec> := {
         "type" : <query type spec>,
-        "key" : [ <key spec>, ... ]
+        "key" : [ <key spec>, ... ],
         <uuid spec>,
         <acceptableSize spec>,
         <cursor spec>,
@@ -345,7 +345,7 @@ It returns the data matching with the conditions.
 The conditions are applied to each key specified regardless of the order.
 
     ~~~~
-    k=<point id>[&k=<[&a=<v or t>][&s=<max or min>][&...]
+    k=<point id>[&a=<v or t>][&s=<max or min>][&...]
     ~~~~
 
 ### write operation
